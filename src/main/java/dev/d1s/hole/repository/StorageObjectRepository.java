@@ -20,6 +20,10 @@ import dev.d1s.hole.entity.StorageObject;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Set;
+
 @Repository
 public interface StorageObjectRepository extends JpaRepository<StorageObject, String> {
+
+    Set<StorageObject> findByObjectGroup(final String group);
 }
