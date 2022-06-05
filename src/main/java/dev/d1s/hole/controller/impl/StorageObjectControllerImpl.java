@@ -23,6 +23,7 @@ import dev.d1s.hole.dto.StorageObjectUpdateDto;
 import dev.d1s.hole.entity.StorageObject;
 import dev.d1s.hole.properties.SslConfigurationProperties;
 import dev.d1s.hole.service.StorageObjectService;
+import dev.d1s.security.configuration.annotation.Secured;
 import dev.d1s.teabag.dto.DtoConverter;
 import dev.d1s.teabag.web.ServletUriComponentsBuilderKt;
 import io.undertow.util.Headers;
@@ -50,6 +51,7 @@ public class StorageObjectControllerImpl implements StorageObjectController {
     private DtoConverter<StorageObjectUpdateDto, StorageObject> storageObjectUpdateDtoConverter;
 
     @NotNull
+    @Secured
     @Override
     public ResponseEntity<StorageObjectDto> getObject(@NotNull final String id) {
         return ResponseEntity.ok(
@@ -58,6 +60,7 @@ public class StorageObjectControllerImpl implements StorageObjectController {
     }
 
     @NotNull
+    @Secured
     @Override
     public ResponseEntity<byte[]> getRawObject(
             @NotNull final String id,
@@ -88,6 +91,7 @@ public class StorageObjectControllerImpl implements StorageObjectController {
     }
 
     @NotNull
+    @Secured
     @Override
     public ResponseEntity<Set<StorageObjectDto>> getAllObjects(@Nullable final String group) {
         return ResponseEntity.ok(
@@ -96,6 +100,7 @@ public class StorageObjectControllerImpl implements StorageObjectController {
     }
 
     @NotNull
+    @Secured
     @Override
     public ResponseEntity<StorageObjectDto> postObject(@NotNull final MultipartFile content, @NotNull final String group, @Nullable final String encryptionKey) throws IOException, CryptorException {
         final var createdObject = storageObjectService.createObject(content, group, encryptionKey).dto();
@@ -112,6 +117,7 @@ public class StorageObjectControllerImpl implements StorageObjectController {
     }
 
     @NotNull
+    @Secured
     @Override
     public ResponseEntity<StorageObjectDto> putObject(@NotNull String id, @NotNull StorageObjectUpdateDto storageObjectUpdateDto) {
         return ResponseEntity.ok(
@@ -123,6 +129,7 @@ public class StorageObjectControllerImpl implements StorageObjectController {
     }
 
     @NotNull
+    @Secured
     @Override
     public ResponseEntity<?> putRawObject(@NotNull String id, @NotNull MultipartFile content, @Nullable final String encryptionKey) throws IOException, CryptorException {
         storageObjectService.overwriteObject(id, content, encryptionKey);
@@ -131,6 +138,7 @@ public class StorageObjectControllerImpl implements StorageObjectController {
     }
 
     @NotNull
+    @Secured
     @Override
     public ResponseEntity<?> deleteObject(@NotNull final String id) throws IOException {
         storageObjectService.deleteObject(id);
