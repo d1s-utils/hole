@@ -28,7 +28,7 @@ services:
       - db-data-mariadb-config:/etc/mysql
 
   hole:
-    image: hole:0.0.1-alpha.0
+    image: hole:0.1.1-beta.0
     container_name: hole
     networks:
       - hole-net
