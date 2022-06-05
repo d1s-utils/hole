@@ -8,6 +8,8 @@
 
 <!-- ## [*Documentation is available on https://hole.d1s.dev!*](https://hole.d1s.dev/) -->
 
+Simple storage service implementation with optional encryption 
+
 ## License
 
 ```
