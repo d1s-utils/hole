@@ -1,0 +1,43 @@
+version: '3'
+
+volumes:
+  db-data-mariadb:
+    driver: local
+
+  db-data-mariadb-config:
+    driver: local
+
+services:
+  hole-mariadb:
+    image: mariadb:10.8.2-rc-focal
+    container_name: hole-mariadb
+    environment:
+      MARIADB_DATABASE: "hole_data"
+      MARIADB_USER: "hole_data"
+      MARIADB_PASSWORD: "hole_data"
+      MARIADB_ROOT_PASSWORD: "root"
+    restart: always
+    expose:
+      - 3306
+    networks:
+      - hole-net
+    volumes:
+      - db-data-mariadb:/var/lib/mysql
+      - db-data-mariadb-config:/etc/mysql
+
+  hole:
+    image: hole:0.0.1-alpha.0
+    container_name: hole
+    networks:
+      - hole-net
+    ports:
+      - "9191:9191"
+    depends_on:
+      - hole-mariadb
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mariadb://hole-mariadb:3306/hole_data
+    restart: on-failure
+
+networks:
+  hole-net:
+    driver: bridge

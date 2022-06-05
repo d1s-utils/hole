@@ -1,0 +1,21 @@
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+
+logging:
+  level:
+    dev.d1s: debug
+
+spring:
+  jpa:
+    show-sql: true
+
+simple-security:
+  authentication-secret: secret
+  enabled: false
+
+hole:
+  storage:
+    root: /hole

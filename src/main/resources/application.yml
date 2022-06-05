@@ -1,0 +1,27 @@
+spring:
+  application:
+    name: "hole"
+
+  profiles:
+    active: "production"
+
+  main:
+    banner-mode: off
+    allow-circular-references: true
+
+  datasource:
+    driver-class-name: org.mariadb.jdbc.Driver
+    url: jdbc:mariadb://localhost:3306/hole_data
+    username: hole_data
+    password: hole_data
+
+  jpa:
+    database-platform: org.hibernate.dialect.MariaDB106Dialect
+    hibernate:
+      ddl-auto: none # required for liquibase migrations
+
+  liquibase:
+    change-log: db/changelog/db.changelog-main.xml
+
+server:
+  port: "9191"

@@ -1,0 +1,24 @@
+version: '3'
+
+volumes:
+  db-data-mariadb:
+    driver: local
+
+  db-data-mariadb-config:
+    driver: local
+
+services:
+  hole-mariadb:
+    image: mariadb:10.8.2-rc-focal
+    container_name: hole-mariadb
+    environment:
+      MARIADB_DATABASE: "hole_data"
+      MARIADB_USER: "hole_data"
+      MARIADB_PASSWORD: "hole_data"
+      MARIADB_ROOT_PASSWORD: "root"
+    restart: always
+    ports:
+      - "3306:3306"
+    volumes:
+      - db-data-mariadb:/var/lib/mysql
+      - db-data-mariadb-config:/etc/mysql
