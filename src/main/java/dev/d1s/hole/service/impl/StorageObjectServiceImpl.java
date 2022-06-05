@@ -55,6 +55,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
+import java.util.Set;
 
 @Service
 public class StorageObjectServiceImpl implements StorageObjectService, InitializingBean {
@@ -137,8 +138,14 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
     @NotNull
     @Override
     @Transactional(readOnly = true)
-    public EntityWithDtoSet<StorageObject, StorageObjectDto> getAllObjects(final boolean requireDto) {
-        final var objects = new HashSet<>(storageObjectRepository.findAll());
+    public EntityWithDtoSet<StorageObject, StorageObjectDto> getAllObjects(@Nullable final String group, final boolean requireDto) {
+        final Set<StorageObject> objects;
+
+        if (group != null) {
+            objects = storageObjectRepository.findByObjectGroup(group);
+        } else {
+            objects = new HashSet<>(storageObjectRepository.findAll());
+        }
 
         return new EntityWithDtoSet<>(
                 objects,

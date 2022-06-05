@@ -45,6 +45,7 @@ public interface StorageObjectService {
 
     @NotNull
     EntityWithDtoSet<StorageObject, StorageObjectDto> getAllObjects(
+            @Nullable final String group,
             final boolean requireDto
     );
 

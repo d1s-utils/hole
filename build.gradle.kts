@@ -19,7 +19,8 @@ val starterSimpleSecurityVersion: String by project
 val longPollingStarterVersion: String by project
 val teabagsVersion: String by project
 val tikaVersion: String by project
-val jncryptorVersion: String by project
+val jnCryptorVersion: String by project
+val jetbrainsAnnotationsVersion: String by project
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
@@ -35,7 +36,9 @@ dependencies {
     implementation("dev.d1s.teabags:teabag-dto:$teabagsVersion")
     implementation("dev.d1s.teabags:teabag-stdlib:$teabagsVersion")
     implementation("org.apache.tika:tika-core:$tikaVersion")
-    implementation("org.cryptonode.jncryptor:jncryptor:$jncryptorVersion")
+    implementation("org.cryptonode.jncryptor:jncryptor:$jnCryptorVersion")
+    implementation("org.jetbrains:annotations:$jetbrainsAnnotationsVersion")
+    implementation(kotlin("stdlib")) // for backwards compatibility
     compileOnly("org.projectlombok:lombok")
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
     annotationProcessor("org.projectlombok:lombok")

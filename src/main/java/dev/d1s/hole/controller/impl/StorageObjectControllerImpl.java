@@ -89,9 +89,9 @@ public class StorageObjectControllerImpl implements StorageObjectController {
 
     @NotNull
     @Override
-    public ResponseEntity<Set<StorageObjectDto>> getAllObjects() {
+    public ResponseEntity<Set<StorageObjectDto>> getAllObjects(@Nullable final String group) {
         return ResponseEntity.ok(
-                storageObjectService.getAllObjects(true).dtos()
+                storageObjectService.getAllObjects(group, true).dtos()
         );
     }
 

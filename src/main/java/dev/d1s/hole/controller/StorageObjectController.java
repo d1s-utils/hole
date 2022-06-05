@@ -61,7 +61,10 @@ public interface StorageObjectController {
 
     @NotNull
     @GetMapping(StorageObjectRequestMappingConstants.GET_ALL_OBJECTS_MAPPING)
-    ResponseEntity<Set<StorageObjectDto>> getAllObjects();
+    ResponseEntity<Set<StorageObjectDto>> getAllObjects(
+            @Nullable
+            @RequestParam(required = false) final String group
+    );
 
     @NotNull
     @PostMapping(StorageObjectRequestMappingConstants.POST_OBJECT_MAPPING)
