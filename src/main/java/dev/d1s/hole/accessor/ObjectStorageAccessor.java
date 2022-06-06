@@ -16,7 +16,7 @@
 
 package dev.d1s.hole.accessor;
 
-import dev.d1s.hole.entity.StorageObject;
+import dev.d1s.hole.entity.storageObject.StorageObject;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;

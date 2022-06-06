@@ -16,7 +16,7 @@
 
 package dev.d1s.hole.repository;
 
-import dev.d1s.hole.entity.StorageObject;
+import dev.d1s.hole.entity.storageObject.StorageObject;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dev.d1s.hole.entity;
+package dev.d1s.hole.entity.storageObject;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;

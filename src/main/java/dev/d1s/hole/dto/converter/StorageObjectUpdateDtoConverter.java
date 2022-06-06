@@ -16,14 +16,21 @@
 
 package dev.d1s.hole.dto.converter;
 
-import dev.d1s.hole.dto.StorageObjectUpdateDto;
-import dev.d1s.hole.entity.StorageObject;
+import dev.d1s.hole.dto.metadata.MetadataPropertyDto;
+import dev.d1s.hole.dto.storageObject.StorageObjectUpdateDto;
+import dev.d1s.hole.entity.metadata.MetadataProperty;
+import dev.d1s.hole.entity.storageObject.StorageObject;
 import dev.d1s.teabag.dto.DtoConverter;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import java.util.stream.Collectors;
 
 @Component
 public class StorageObjectUpdateDtoConverter implements DtoConverter<StorageObjectUpdateDto, StorageObject> {
+
+    private DtoConverter<MetadataPropertyDto, MetadataProperty> metadataPropertyDtoConverter;
 
     @NotNull
     @Override
@@ -36,7 +43,16 @@ public class StorageObjectUpdateDtoConverter implements DtoConverter<StorageObje
     public StorageObject convertToEntity(@NotNull StorageObjectUpdateDto storageObjectUpdateDto) {
         return new StorageObject(
                 storageObjectUpdateDto.name(),
-                storageObjectUpdateDto.group()
+                storageObjectUpdateDto.group(),
+                storageObjectUpdateDto.metadata()
+                        .stream()
+                        .map(metadataPropertyDtoConverter::convertToEntity)
+                        .collect(Collectors.toSet())
         );
+    }
+
+    @Autowired
+    public void setMetadataPropertyDtoConverter(final DtoConverter<MetadataPropertyDto, MetadataProperty> metadataPropertyDtoConverter) {
+        this.metadataPropertyDtoConverter = metadataPropertyDtoConverter;
     }
 }

@@ -16,10 +16,14 @@
 
 package dev.d1s.hole.repository;
 
-import dev.d1s.hole.entity.storageObject.StorageObjectAccess;
+import dev.d1s.hole.entity.metadata.MetadataProperty;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
-public interface StorageObjectAccessRepository extends JpaRepository<StorageObjectAccess, String> {
+public interface MetadataPropertyRepository extends JpaRepository<MetadataProperty, String> {
+
+    Optional<MetadataProperty> findByPropertyAndValue(final String property, final String value);
 }

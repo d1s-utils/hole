@@ -53,9 +53,43 @@
             </column>
         </createTable>
 
+        <createTable tableName="metadata_property">
+            <column name="id" type="VARCHAR(255)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="pk_metadata_property"/>
+            </column>
+            <column name="creation_time" type="DATETIME">
+                <constraints nullable="false"/>
+            </column>
+            <column name="property" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="value" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="storage_object_metadata">
+            <column name="storage_object_id" type="VARCHAR(255)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="pk_storage_object_id"/>
+            </column>
+            <column name="metadata_property_id" type="VARCHAR(255)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="pk_metadata_property_id"/>
+            </column>
+        </createTable>
+
         <addForeignKeyConstraint baseTableName="storage_object_access" baseColumnNames="storage_object_id"
                                  constraintName="fr_storage_object_access_on_storage_object"
                                  referencedTableName="storage_object"
+                                 referencedColumnNames="id"/>
+
+        <addForeignKeyConstraint baseTableName="storage_object_metadata" baseColumnNames="storage_object_id"
+                                 constraintName="fr_storage_object_metadata_on_storage_object"
+                                 referencedTableName="storage_object"
+                                 referencedColumnNames="id"/>
+
+        <addForeignKeyConstraint baseTableName="storage_object_metadata" baseColumnNames="metadata_property_id"
+                                 constraintName="fr_storage_object_metadata_on_metadata_property"
+                                 referencedTableName="metadata_property"
                                  referencedColumnNames="id"/>
     </changeSet>
 </databaseChangeLog>

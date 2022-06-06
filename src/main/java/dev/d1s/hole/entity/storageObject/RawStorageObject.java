@@ -14,15 +14,18 @@
  * limitations under the License.
  */
 
-package dev.d1s.hole.dto;
+package dev.d1s.hole.entity.storageObject;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.time.Instant;
-
-public record StorageObjectAccessDto(
+public record RawStorageObject(
 
         @NotNull
-        Instant time
+        String name,
+
+        @NotNull
+        String contentType,
+
+        byte[] content
 ) {
 }

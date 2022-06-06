@@ -18,9 +18,9 @@ package dev.d1s.hole.controller.impl;
 
 import dev.d1s.hole.constant.contentDisposition.ContentDispositionConstants;
 import dev.d1s.hole.controller.StorageObjectController;
-import dev.d1s.hole.dto.StorageObjectDto;
-import dev.d1s.hole.dto.StorageObjectUpdateDto;
-import dev.d1s.hole.entity.StorageObject;
+import dev.d1s.hole.dto.storageObject.StorageObjectDto;
+import dev.d1s.hole.dto.storageObject.StorageObjectUpdateDto;
+import dev.d1s.hole.entity.storageObject.StorageObject;
 import dev.d1s.hole.properties.SslConfigurationProperties;
 import dev.d1s.hole.service.StorageObjectService;
 import dev.d1s.security.configuration.annotation.Secured;

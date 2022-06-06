@@ -18,7 +18,7 @@ package dev.d1s.hole.constant.regex;
 
 public final class RegexConstants {
 
-    public static final String OBJECT_GROUP_REGEX = "[a-z]+((\\\\?[-._][a-z]+)+)?";
+    public static final String COMMON_NAME_REGEX = "[a-z]+((\\\\?[-._][a-z]+)+)?";
 
     private RegexConstants() {
     }

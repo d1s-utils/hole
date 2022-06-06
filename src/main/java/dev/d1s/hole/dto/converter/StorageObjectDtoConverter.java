@@ -16,10 +16,12 @@
 
 package dev.d1s.hole.dto.converter;
 
-import dev.d1s.hole.dto.StorageObjectAccessDto;
-import dev.d1s.hole.dto.StorageObjectDto;
-import dev.d1s.hole.entity.StorageObject;
-import dev.d1s.hole.entity.StorageObjectAccess;
+import dev.d1s.hole.dto.metadata.MetadataPropertyDto;
+import dev.d1s.hole.dto.storageObject.StorageObjectAccessDto;
+import dev.d1s.hole.dto.storageObject.StorageObjectDto;
+import dev.d1s.hole.entity.metadata.MetadataProperty;
+import dev.d1s.hole.entity.storageObject.StorageObject;
+import dev.d1s.hole.entity.storageObject.StorageObjectAccess;
 import dev.d1s.teabag.dto.DtoConverter;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +35,8 @@ public class StorageObjectDtoConverter implements DtoConverter<StorageObjectDto,
 
     private DtoConverter<StorageObjectAccessDto, StorageObjectAccess> storageObjectAccessDtoConverter;
 
+    private DtoConverter<MetadataPropertyDto, MetadataProperty> metadataPropertyDtoConverter;
+
     @NotNull
     @Override
     public StorageObjectDto convertToDto(@NotNull final StorageObject storageObject) {
@@ -45,6 +49,10 @@ public class StorageObjectDtoConverter implements DtoConverter<StorageObjectDto,
                 storageObject.getStorageObjectAccesses()
                         .stream()
                         .map(storageObjectAccessDtoConverter::convertToDto)
+                        .collect(Collectors.toSet()),
+                storageObject.getMetadata()
+                        .stream()
+                        .map(metadataPropertyDtoConverter::convertToDto)
                         .collect(Collectors.toSet())
         );
     }
@@ -58,5 +66,10 @@ public class StorageObjectDtoConverter implements DtoConverter<StorageObjectDto,
     @Autowired
     public void setStorageObjectAccessDtoConverter(final DtoConverter<StorageObjectAccessDto, StorageObjectAccess> storageObjectAccessDtoConverter) {
         this.storageObjectAccessDtoConverter = storageObjectAccessDtoConverter;
+    }
+
+    @Autowired
+    public void setMetadataPropertyDtoConverter(final DtoConverter<MetadataPropertyDto, MetadataProperty> metadataPropertyDtoConverter) {
+        this.metadataPropertyDtoConverter = metadataPropertyDtoConverter;
     }
 }

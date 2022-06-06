@@ -16,28 +16,27 @@
 
 package dev.d1s.hole.dto.converter;
 
-import dev.d1s.hole.dto.storageObject.StorageObjectAccessDto;
-import dev.d1s.hole.entity.storageObject.StorageObjectAccess;
+import dev.d1s.hole.dto.metadata.MetadataPropertyDto;
+import dev.d1s.hole.entity.metadata.MetadataProperty;
 import dev.d1s.teabag.dto.DtoConverter;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Component;
 
-import java.util.Objects;
-
 @Component
-public class StorageObjectAccessDtoConverter implements DtoConverter<StorageObjectAccessDto, StorageObjectAccess> {
+public class MetadataPropertyDtoConverter implements DtoConverter<MetadataPropertyDto, MetadataProperty> {
 
     @NotNull
     @Override
-    public StorageObjectAccessDto convertToDto(@NotNull final StorageObjectAccess storageObjectAccess) {
-        return new StorageObjectAccessDto(
-                Objects.requireNonNull(storageObjectAccess.getTime())
+    public MetadataPropertyDto convertToDto(@NotNull final MetadataProperty metadataProperty) {
+        return new MetadataPropertyDto(
+                metadataProperty.getProperty(),
+                metadataProperty.getValue()
         );
     }
 
     @NotNull
     @Override
-    public StorageObjectAccess convertToEntity(@NotNull final StorageObjectAccessDto storageObjectAccessDto) {
-        throw new UnsupportedOperationException();
+    public MetadataProperty convertToEntity(@NotNull final MetadataPropertyDto metadataPropertyDto) {
+        return new MetadataProperty(metadataPropertyDto.property(), metadataPropertyDto.value());
     }
 }

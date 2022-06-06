@@ -18,8 +18,8 @@ package dev.d1s.hole.controller;
 
 import dev.d1s.hole.constant.mapping.storageObject.StorageObjectRequestMappingConstants;
 import dev.d1s.hole.constant.regex.RegexConstants;
-import dev.d1s.hole.dto.StorageObjectDto;
-import dev.d1s.hole.dto.StorageObjectUpdateDto;
+import dev.d1s.hole.dto.storageObject.StorageObjectDto;
+import dev.d1s.hole.dto.storageObject.StorageObjectUpdateDto;
 import org.cryptonode.jncryptor.CryptorException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -73,7 +73,7 @@ public interface StorageObjectController {
             @RequestParam final MultipartFile content,
             @NotNull
             @RequestParam
-            @Pattern(regexp = RegexConstants.OBJECT_GROUP_REGEX) final String group,
+            @Pattern(regexp = RegexConstants.COMMON_NAME_REGEX) final String group,
             @Nullable
             @RequestParam(required = false) final String encryptionKey
     ) throws IOException, CryptorException;

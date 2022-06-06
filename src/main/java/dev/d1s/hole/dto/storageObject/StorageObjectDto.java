@@ -14,20 +14,34 @@
  * limitations under the License.
  */
 
-package dev.d1s.hole.dto;
+package dev.d1s.hole.dto.storageObject;
 
+import dev.d1s.hole.dto.metadata.MetadataPropertyDto;
 import org.jetbrains.annotations.NotNull;
 
-import javax.validation.constraints.NotBlank;
+import java.time.Instant;
+import java.util.Set;
 
-public record StorageObjectUpdateDto(
+public record StorageObjectDto(
 
         @NotNull
-        @NotBlank
+        String id,
+
+        @NotNull
+        Instant creationTime,
+
+        @NotNull
         String name,
 
         @NotNull
-        @NotBlank
-        String group
+        String group,
+
+        boolean encrypted,
+
+        @NotNull
+        Set<StorageObjectAccessDto> accesses,
+
+        @NotNull
+        Set<MetadataPropertyDto> metadata
 ) {
 }
