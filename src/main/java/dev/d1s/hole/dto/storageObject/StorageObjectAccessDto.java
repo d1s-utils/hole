@@ -14,12 +14,15 @@
  * limitations under the License.
  */
 
-package dev.d1s.hole.repository;
+package dev.d1s.hole.dto.storageObject;
 
-import dev.d1s.hole.entity.storageObject.StorageObjectAccess;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+import org.jetbrains.annotations.NotNull;
 
-@Repository
-public interface StorageObjectAccessRepository extends JpaRepository<StorageObjectAccess, String> {
+import java.time.Instant;
+
+public record StorageObjectAccessDto(
+
+        @NotNull
+        Instant time
+) {
 }

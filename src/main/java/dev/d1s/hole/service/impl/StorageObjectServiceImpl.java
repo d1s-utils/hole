@@ -22,15 +22,16 @@ import dev.d1s.hole.accessor.ObjectStorageAccessor;
 import dev.d1s.hole.constant.error.EncryptionErrorConstants;
 import dev.d1s.hole.constant.error.StorageObjectErrorConstants;
 import dev.d1s.hole.constant.longPolling.StorageObjectLongPollingConstants;
-import dev.d1s.hole.dto.StorageObjectAccessDto;
-import dev.d1s.hole.dto.StorageObjectDto;
 import dev.d1s.hole.dto.common.EntityWithDto;
 import dev.d1s.hole.dto.common.EntityWithDtoSet;
-import dev.d1s.hole.entity.RawStorageObject;
-import dev.d1s.hole.entity.StorageObject;
-import dev.d1s.hole.entity.StorageObjectAccess;
+import dev.d1s.hole.dto.storageObject.StorageObjectAccessDto;
+import dev.d1s.hole.dto.storageObject.StorageObjectDto;
+import dev.d1s.hole.entity.storageObject.RawStorageObject;
+import dev.d1s.hole.entity.storageObject.StorageObject;
+import dev.d1s.hole.entity.storageObject.StorageObjectAccess;
 import dev.d1s.hole.repository.StorageObjectAccessRepository;
 import dev.d1s.hole.repository.StorageObjectRepository;
+import dev.d1s.hole.service.MetadataService;
 import dev.d1s.hole.service.StorageObjectService;
 import dev.d1s.hole.util.FileNameUtils;
 import dev.d1s.lp.server.publisher.AsyncLongPollingEventPublisher;
@@ -56,6 +57,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class StorageObjectServiceImpl implements StorageObjectService, InitializingBean {
@@ -77,6 +79,8 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
     private AsyncLongPollingEventPublisher publisher;
 
     private JNCryptor jnCryptor;
+
+    private MetadataService metadataService;
 
     @Lazy
     private StorageObjectServiceImpl storageObjectServiceImpl;
@@ -164,7 +168,8 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
         final var object = storageObjectRepository.save(
                 new StorageObject(
                         FileNameUtils.sanitize(content.getOriginalFilename()),
-                        group
+                        group,
+                        new HashSet<>()
                 )
         );
 
@@ -188,6 +193,17 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
 
         foundObject.setName(storageObject.getName());
         foundObject.setObjectGroup(storageObject.getObjectGroup());
+        foundObject.setMetadata(
+                storageObject.getMetadata()
+                        .stream()
+                        .map(metadataProperty ->
+                                metadataService.findMetadataPropertyByPropertyNameAndValue(
+                                        metadataProperty.getProperty(),
+                                        metadataProperty.getValue()
+                                ).orElse(metadataService.saveMetadataProperty(metadataProperty))
+                        )
+                        .collect(Collectors.toSet())
+        );
 
         final var savedObject = storageObjectRepository.save(foundObject);
 
@@ -291,5 +307,10 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
     @Autowired
     public void setStorageObjectServiceImpl(final StorageObjectServiceImpl storageObjectServiceImpl) {
         this.storageObjectServiceImpl = storageObjectServiceImpl;
+    }
+
+    @Autowired
+    public void setMetadataService(final MetadataService metadataService) {
+        this.metadataService = metadataService;
     }
 }

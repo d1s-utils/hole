@@ -14,11 +14,27 @@
  * limitations under the License.
  */
 
-package dev.d1s.hole.entity;
+package dev.d1s.hole.dto.storageObject;
 
-public record RawStorageObject(
+import dev.d1s.hole.constant.regex.RegexConstants;
+import dev.d1s.hole.dto.metadata.MetadataPropertyDto;
+import org.jetbrains.annotations.NotNull;
+
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Pattern;
+import java.util.Set;
+
+public record StorageObjectUpdateDto(
+
+        @NotNull
+        @NotBlank
         String name,
-        String contentType,
-        byte[] content
+
+        @NotNull
+        @Pattern(regexp = RegexConstants.COMMON_NAME_REGEX)
+        String group,
+
+        @NotNull
+        Set<MetadataPropertyDto> metadata
 ) {
 }

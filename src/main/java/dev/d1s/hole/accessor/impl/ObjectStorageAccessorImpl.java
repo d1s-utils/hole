@@ -18,7 +18,7 @@ package dev.d1s.hole.accessor.impl;
 
 import dev.d1s.hole.accessor.ObjectStorageAccessor;
 import dev.d1s.hole.constant.error.StorageErrorConstants;
-import dev.d1s.hole.entity.StorageObject;
+import dev.d1s.hole.entity.storageObject.StorageObject;
 import dev.d1s.hole.exception.IllegalStorageRootException;
 import dev.d1s.hole.properties.StorageConfigurationProperties;
 import org.jetbrains.annotations.NotNull;

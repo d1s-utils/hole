@@ -14,30 +14,18 @@
  * limitations under the License.
  */
 
-package dev.d1s.hole.dto;
+package dev.d1s.hole.service;
 
+import dev.d1s.hole.entity.metadata.MetadataProperty;
 import org.jetbrains.annotations.NotNull;
 
-import java.time.Instant;
-import java.util.Set;
+import java.util.Optional;
 
-public record StorageObjectDto(
+public interface MetadataService {
 
-        @NotNull
-        String id,
+    @NotNull
+    Optional<MetadataProperty> findMetadataPropertyByPropertyNameAndValue(@NotNull final String property, @NotNull final String value);
 
-        @NotNull
-        Instant creationTime,
-
-        @NotNull
-        String name,
-
-        @NotNull
-        String group,
-
-        boolean encrypted,
-
-        @NotNull
-        Set<StorageObjectAccessDto> accesses
-) {
+    @NotNull
+    MetadataProperty saveMetadataProperty(@NotNull final MetadataProperty metadataProperty);
 }

@@ -17,11 +17,11 @@
 package dev.d1s.hole.service;
 
 import dev.d1s.advice.exception.NotFoundException;
-import dev.d1s.hole.dto.StorageObjectDto;
+import dev.d1s.hole.dto.storageObject.StorageObjectDto;
 import dev.d1s.hole.dto.common.EntityWithDto;
 import dev.d1s.hole.dto.common.EntityWithDtoSet;
-import dev.d1s.hole.entity.RawStorageObject;
-import dev.d1s.hole.entity.StorageObject;
+import dev.d1s.hole.entity.storageObject.RawStorageObject;
+import dev.d1s.hole.entity.storageObject.StorageObject;
 import org.cryptonode.jncryptor.CryptorException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

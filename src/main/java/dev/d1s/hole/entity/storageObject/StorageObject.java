@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package dev.d1s.hole.entity;
+package dev.d1s.hole.entity.storageObject;
 
 import dev.d1s.hole.entity.common.Identifiable;
+import dev.d1s.hole.entity.metadata.MetadataProperty;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -49,15 +50,25 @@ public final class StorageObject extends Identifiable {
     @OneToMany(mappedBy = "storageObject", cascade = CascadeType.ALL)
     private Set<StorageObjectAccess> storageObjectAccesses;
 
-    public StorageObject(@NotNull final String name, @NotNull final String objectGroup, final boolean encrypted) {
+    @NotNull
+    @ManyToMany
+    @JoinTable(
+            name = "storage_object_metadata",
+            joinColumns = @JoinColumn(name = "storage_object_id"),
+            inverseJoinColumns = @JoinColumn(name = "metadata_property_id")
+    )
+    private Set<MetadataProperty> metadata;
+
+    public StorageObject(@NotNull final String name, @NotNull final String objectGroup, final boolean encrypted, @NotNull final Set<MetadataProperty> metadata) {
         this.name = name;
         this.objectGroup = objectGroup;
         this.encrypted = encrypted;
+        this.metadata = metadata;
         this.storageObjectAccesses = new HashSet<>();
     }
 
-    public StorageObject(@NotNull final String name, @NotNull final String objectGroup) {
-        this(name, objectGroup, false);
+    public StorageObject(@NotNull final String name, @NotNull final String objectGroup, @NotNull final Set<MetadataProperty> metadata) {
+        this(name, objectGroup, false, metadata);
     }
 
     @Override
