@@ -70,10 +70,11 @@
 
         <createTable tableName="storage_object_metadata">
             <column name="storage_object_id" type="VARCHAR(255)">
-                <constraints nullable="false" primaryKey="true" primaryKeyName="pk_storage_object_id"/>
+                <constraints nullable="false" primaryKey="true"
+                             primaryKeyName="pk_storage_object_metadata_storage_object"/>
             </column>
             <column name="metadata_property_id" type="VARCHAR(255)">
-                <constraints nullable="false" primaryKey="true" primaryKeyName="pk_metadata_property_id"/>
+                <constraints nullable="false" primaryKey="true" primaryKeyName="pk_storage_object_metadata_metadata"/>
             </column>
         </createTable>
 
