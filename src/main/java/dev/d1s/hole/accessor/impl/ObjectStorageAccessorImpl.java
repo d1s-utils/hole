@@ -19,6 +19,7 @@ package dev.d1s.hole.accessor.impl;
 import dev.d1s.hole.accessor.ObjectStorageAccessor;
 import dev.d1s.hole.constant.error.StorageErrorConstants;
 import dev.d1s.hole.entity.storageObject.StorageObject;
+import dev.d1s.hole.entity.storageObject.StorageObjectPart;
 import dev.d1s.hole.exception.IllegalStorageRootException;
 import dev.d1s.hole.properties.StorageConfigurationProperties;
 import org.jetbrains.annotations.NotNull;
@@ -29,6 +30,9 @@ import org.springframework.stereotype.Component;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
 
 @Component
 public class ObjectStorageAccessorImpl implements ObjectStorageAccessor, InitializingBean {
@@ -37,8 +41,29 @@ public class ObjectStorageAccessorImpl implements ObjectStorageAccessor, Initial
 
     @NotNull
     @Override
-    public Path resolveObjectAsPath(@NotNull final StorageObject object) {
-        return Paths.get(properties.getRoot(), object.getId());
+    public Set<StorageObjectPart> findAllAssociatingParts(@NotNull StorageObject object) {
+        final var result = new HashSet<StorageObjectPart>();
+
+        var currentPartId = 0;
+
+        while (true) {
+            final var partPath = this.getPath(object, currentPartId);
+
+            if (Files.exists(partPath)) {
+                result.add(new StorageObjectPart(currentPartId, Objects.requireNonNull(object.getId()), partPath));
+                currentPartId++;
+            } else {
+                break;
+            }
+        }
+
+        return result;
+    }
+
+    @NotNull
+    @Override
+    public StorageObjectPart resolveAsPart(@NotNull StorageObject object, int partId) {
+        return new StorageObjectPart(partId, Objects.requireNonNull(object.getId()), this.getPath(object, partId));
     }
 
     @Override
@@ -65,5 +90,9 @@ public class ObjectStorageAccessorImpl implements ObjectStorageAccessor, Initial
     @Autowired
     public void setProperties(final StorageConfigurationProperties properties) {
         this.properties = properties;
+    }
+
+    private Path getPath(@NotNull final StorageObject object, final int partId) {
+        return Paths.get(properties.getRoot(), partId + StorageObjectPart.DELIMITER + object.getId());
     }
 }

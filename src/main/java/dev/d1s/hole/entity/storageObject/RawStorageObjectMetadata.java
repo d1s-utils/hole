@@ -14,19 +14,16 @@
  * limitations under the License.
  */
 
-package dev.d1s.hole.accessor;
+package dev.d1s.hole.entity.storageObject;
 
-import dev.d1s.hole.entity.storageObject.StorageObject;
-import dev.d1s.hole.entity.storageObject.StorageObjectPart;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Set;
+public record RawStorageObjectMetadata(
 
-public interface ObjectStorageAccessor {
+        @NotNull
+        String name,
 
-    @NotNull
-    Set<StorageObjectPart> findAllAssociatingParts(@NotNull final StorageObject object);
-
-    @NotNull
-    StorageObjectPart resolveAsPart(@NotNull final StorageObject object, final int partId);
+        @NotNull
+        String contentType
+) {
 }

@@ -17,10 +17,10 @@
 package dev.d1s.hole.service;
 
 import dev.d1s.advice.exception.NotFoundException;
-import dev.d1s.hole.dto.storageObject.StorageObjectDto;
 import dev.d1s.hole.dto.common.EntityWithDto;
 import dev.d1s.hole.dto.common.EntityWithDtoSet;
-import dev.d1s.hole.entity.storageObject.RawStorageObject;
+import dev.d1s.hole.dto.storageObject.StorageObjectDto;
+import dev.d1s.hole.entity.storageObject.RawStorageObjectMetadata;
 import dev.d1s.hole.entity.storageObject.StorageObject;
 import org.cryptonode.jncryptor.CryptorException;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.io.OutputStream;
 
 public interface StorageObjectService {
 
@@ -38,9 +39,10 @@ public interface StorageObjectService {
     ) throws NotFoundException;
 
     @NotNull
-    RawStorageObject getRawObject(
+    RawStorageObjectMetadata readRawObject(
             @NotNull final String id,
-            @Nullable final String encryptionKey
+            @Nullable final String encryptionKey,
+            @NotNull final OutputStream out
     ) throws NotFoundException, IOException, CryptorException;
 
     @NotNull

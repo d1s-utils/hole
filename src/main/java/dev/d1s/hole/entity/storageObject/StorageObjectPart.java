@@ -18,14 +18,24 @@ package dev.d1s.hole.entity.storageObject;
 
 import org.jetbrains.annotations.NotNull;
 
-public record RawStorageObject(
+import java.nio.file.Path;
+
+public record StorageObjectPart(
+
+        int partId,
 
         @NotNull
-        String name,
+        String objectId,
 
         @NotNull
-        String contentType,
-
-        byte[] content
+        Path path
 ) {
+    public static final String DELIMITER = "-";
+    public static final int SIZE = 1024 * 1024; // 1 MB
+
+    @NotNull
+    @Override
+    public String toString() {
+        return partId + StorageObjectPart.DELIMITER + objectId;
+    }
 }
