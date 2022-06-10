@@ -46,9 +46,8 @@ public interface StorageObjectController {
             @NotBlank final String id
     );
 
-    @NotNull
     @GetMapping(StorageObjectRequestMappingConstants.GET_RAW_OBJECT_MAPPING)
-    ResponseEntity<byte[]> getRawObject(
+    void readRawObject(
             @NotNull
             @PathVariable
             @NotBlank final String id,

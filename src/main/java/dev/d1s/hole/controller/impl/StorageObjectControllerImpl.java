@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
@@ -59,16 +60,15 @@ public class StorageObjectControllerImpl implements StorageObjectController {
         );
     }
 
-    @NotNull
     @Secured
     @Override
-    public ResponseEntity<byte[]> getRawObject(
+    public void readRawObject(
             @NotNull final String id,
             @Nullable final String contentDisposition,
             @Nullable final String encryptionKey,
             @NotNull final HttpServletResponse response
     ) throws IOException, CryptorException {
-        final var rawObject = storageObjectService.getRawObject(id, encryptionKey);
+        final var rawObject = storageObjectService.readRawObject(id, encryptionKey, response.getOutputStream());
 
         response.setHeader(
                 Headers.CONTENT_TYPE_STRING,
@@ -87,7 +87,7 @@ public class StorageObjectControllerImpl implements StorageObjectController {
                         .toString()
         );
 
-        return ResponseEntity.ok(rawObject.content());
+        response.setStatus(HttpStatus.OK.value());
     }
 
     @NotNull

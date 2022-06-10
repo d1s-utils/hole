@@ -23,5 +23,12 @@ spring:
   liquibase:
     change-log: db/changelog/db.changelog-main.xml
 
+  servlet:
+    multipart:
+      max-file-size: -1
+      max-request-size: -1
+
 server:
   port: "9191"
+  undertow:
+    max-http-post-size: -1

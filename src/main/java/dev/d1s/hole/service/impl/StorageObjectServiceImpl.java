@@ -16,6 +16,7 @@
 
 package dev.d1s.hole.service.impl;
 
+import com.fasterxml.jackson.core.util.ByteArrayBuilder;
 import dev.d1s.advice.exception.BadRequestException;
 import dev.d1s.advice.exception.NotFoundException;
 import dev.d1s.hole.accessor.ObjectStorageAccessor;
@@ -26,9 +27,10 @@ import dev.d1s.hole.dto.common.EntityWithDto;
 import dev.d1s.hole.dto.common.EntityWithDtoSet;
 import dev.d1s.hole.dto.storageObject.StorageObjectAccessDto;
 import dev.d1s.hole.dto.storageObject.StorageObjectDto;
-import dev.d1s.hole.entity.storageObject.RawStorageObject;
+import dev.d1s.hole.entity.storageObject.RawStorageObjectMetadata;
 import dev.d1s.hole.entity.storageObject.StorageObject;
 import dev.d1s.hole.entity.storageObject.StorageObjectAccess;
+import dev.d1s.hole.entity.storageObject.StorageObjectPart;
 import dev.d1s.hole.repository.StorageObjectAccessRepository;
 import dev.d1s.hole.repository.StorageObjectRepository;
 import dev.d1s.hole.service.MetadataService;
@@ -49,14 +51,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.FileCopyUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 @Service
@@ -105,17 +107,43 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
     @NotNull
     @Override
     @Transactional
-    public RawStorageObject getRawObject(@NotNull final String id, @Nullable final String encryptionKey) throws NotFoundException, IOException, CryptorException {
+    public RawStorageObjectMetadata readRawObject(@NotNull final String id, @Nullable final String encryptionKey, @NotNull final OutputStream out) throws NotFoundException, CryptorException {
         final var object = storageObjectServiceImpl.getObject(id, false).entity();
+        final var objectName = object.getName();
 
-        var content = Files.readAllBytes(objectStorageAccessor.resolveObjectAsPath(object));
+        final var parts = objectStorageAccessor.findAllAssociatingParts(object);
 
-        if (object.isEncrypted()) {
-            if (encryptionKey == null) {
-                throw new BadRequestException(EncryptionErrorConstants.ENCRYPTION_KEY_NOT_PRESENT_ERROR);
+        final var contentType = new AtomicReference<String>(null);
+        final var cryptorException = new AtomicReference<CryptorException>(null);
+
+        parts.forEach(p -> {
+            try {
+                var bytes = Files.readAllBytes(p.path());
+
+                final var encrypted = object.isEncrypted();
+
+                if (encrypted && encryptionKey != null) {
+                    bytes = jnCryptor.decryptData(bytes, encryptionKey.toCharArray());
+                } else if (encrypted) {
+                    throw new BadRequestException(EncryptionErrorConstants.ENCRYPTION_KEY_NOT_PRESENT_ERROR);
+                }
+
+                if (contentType.get() == null) {
+                    contentType.set(tika.detect(bytes, objectName));
+                }
+
+                out.write(bytes);
+            } catch (IOException | CryptorException e) {
+                if (e instanceof CryptorException casted) {
+                    cryptorException.set(casted);
+                } else {
+                    throw new RuntimeException(e);
+                }
             }
+        });
 
-            content = jnCryptor.decryptData(content, encryptionKey.toCharArray());
+        if (cryptorException.get() != null) {
+            throw cryptorException.get();
         }
 
         final var objectAccess = storageObjectAccessRepository.save(new StorageObjectAccess(object));
@@ -130,13 +158,7 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
                 storageObjectAccessDtoConverter.convertToDto(objectAccess)
         );
 
-        final var objectName = object.getName();
-
-        return new RawStorageObject(
-                objectName,
-                tika.detect(content, objectName),
-                content
-        );
+        return new RawStorageObjectMetadata(objectName, contentType.get());
     }
 
     @NotNull
@@ -169,11 +191,12 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
                 new StorageObject(
                         FileNameUtils.sanitize(content.getOriginalFilename()),
                         group,
+                        encryptionKey != null,
                         new HashSet<>()
                 )
         );
 
-        this.writeObject(object, content.getBytes(), encryptionKey, objectStorageAccessor.resolveObjectAsPath(object));
+        this.writeObject(object, encryptionKey, content);
 
         final var objectDto = storageObjectDtoConverter.convertToDto(object);
 
@@ -221,27 +244,32 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
     @Override
     public void overwriteObject(@NotNull final String id, @NotNull final MultipartFile content, @Nullable final String encryptionKey) throws IOException, CryptorException {
         final var object = storageObjectServiceImpl.getObject(id, false).entity();
-        final var path = objectStorageAccessor.resolveObjectAsPath(object);
+
+        final var encryptionUsed = encryptionKey != null;
+
+        if (object.isEncrypted() != encryptionUsed) {
+            object.setEncrypted(encryptionUsed);
+        }
 
         publisher.publish(
                 StorageObjectLongPollingConstants.STORAGE_OBJECT_OVERWRITTEN_GROUP,
                 object.getId(),
-                new Object() // {}
+                null
         );
 
-        Files.delete(path);
+        this.deleteObject(object);
 
-        this.writeObject(object, content.getBytes(), encryptionKey, path);
+        this.writeObject(object, encryptionKey, content);
     }
 
     @Override
     @Transactional
-    public void deleteObject(@NotNull final String id) throws NotFoundException, IOException {
+    public void deleteObject(@NotNull final String id) throws NotFoundException {
         final var object = storageObjectServiceImpl.getObject(id, false).entity();
 
-        Files.delete(objectStorageAccessor.resolveObjectAsPath(object));
-
         storageObjectRepository.delete(object);
+
+        this.deleteObject(object);
 
         publisher.publish(
                 StorageObjectLongPollingConstants.STORAGE_OBJECT_DELETED_GROUP,
@@ -250,13 +278,59 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
         );
     }
 
-    private void writeObject(final StorageObject object, byte[] bytes, final String encryptionKey, final Path path) throws CryptorException, IOException {
+    private void writeObject(final StorageObject object, final String encryptionKey, final MultipartFile content) throws CryptorException, IOException {
+        var currentPartId = 0;
+        var out = this.newOutputStream(object, currentPartId);
+
+        final var byteArrayBuilder = new ByteArrayBuilder();
+
+        try (final var in = content.getInputStream()) {
+            while (true) {
+                final var b = in.read();
+
+                if (b == -1) {
+                    this.flushByteArrayBuilder(byteArrayBuilder, encryptionKey, out);
+                    break;
+                }
+
+                byteArrayBuilder.append(b);
+
+                if (byteArrayBuilder.size() == StorageObjectPart.SIZE) {
+                    this.flushByteArrayBuilder(byteArrayBuilder, encryptionKey, out);
+                    out = this.newOutputStream(object, ++currentPartId);
+                }
+            }
+        } finally {
+            out.close();
+            byteArrayBuilder.close();
+        }
+    }
+
+    private void flushByteArrayBuilder(final ByteArrayBuilder byteArrayBuilder, final String encryptionKey, final OutputStream out) throws CryptorException, IOException {
+        var bytes = byteArrayBuilder.toByteArray();
+
         if (encryptionKey != null) {
             bytes = jnCryptor.encryptData(bytes, encryptionKey.toCharArray());
-            object.setEncrypted(true);
         }
 
-        FileCopyUtils.copy(bytes, Files.newOutputStream(path));
+        out.write(bytes);
+        out.close();
+
+        byteArrayBuilder.reset();
+    }
+
+    private OutputStream newOutputStream(final StorageObject object, final int partId) throws IOException {
+        return Files.newOutputStream(objectStorageAccessor.resolveAsPart(object, partId).path());
+    }
+
+    private void deleteObject(final StorageObject object) {
+        objectStorageAccessor.findAllAssociatingParts(object).forEach(p -> {
+            try {
+                Files.delete(p.path());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
     @Override
