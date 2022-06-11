@@ -21,6 +21,7 @@ import dev.d1s.advice.exception.BadRequestException;
 import dev.d1s.advice.exception.NotFoundException;
 import dev.d1s.hole.accessor.ObjectStorageAccessor;
 import dev.d1s.hole.constant.error.EncryptionErrorConstants;
+import dev.d1s.hole.constant.error.MetadataErrorConstants;
 import dev.d1s.hole.constant.error.StorageObjectErrorConstants;
 import dev.d1s.hole.constant.longPolling.StorageObjectLongPollingConstants;
 import dev.d1s.hole.dto.common.EntityWithDto;
@@ -213,6 +214,14 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
     @Override
     public EntityWithDto<StorageObject, StorageObjectDto> updateObject(@NotNull final String id, @NotNull final StorageObject storageObject) {
         final var foundObject = storageObjectServiceImpl.getObject(id, false).entity();
+
+        final var propertySet = new HashSet<String>();
+
+        for (final var p : storageObject.getMetadata()) {
+            if (!propertySet.add(p.getProperty())) {
+                throw new BadRequestException(MetadataErrorConstants.DUPLICATE_METADATA_PROPERTY_ERROR);
+            }
+        }
 
         foundObject.setName(storageObject.getName());
         foundObject.setObjectGroup(storageObject.getObjectGroup());
