@@ -14,37 +14,12 @@
  * limitations under the License.
  */
 
-package dev.d1s.hole.dto.storageObject;
+package dev.d1s.hole.constant.cache;
 
-import dev.d1s.hole.dto.metadata.MetadataPropertyDto;
-import org.jetbrains.annotations.NotNull;
+public final class CacheNameConstants {
 
-import java.time.Instant;
-import java.util.Set;
+    public static final String SHA256_DIGEST_CACHE = "sha-256-digest";
 
-public record StorageObjectDto(
-
-        @NotNull
-        String id,
-
-        @NotNull
-        Instant creationTime,
-
-        @NotNull
-        String name,
-
-        @NotNull
-        String group,
-
-        boolean encrypted,
-
-        @NotNull
-        String digest,
-
-        @NotNull
-        Set<StorageObjectAccessDto> accesses,
-
-        @NotNull
-        Set<MetadataPropertyDto> metadata
-) {
+    private CacheNameConstants() {
+    }
 }

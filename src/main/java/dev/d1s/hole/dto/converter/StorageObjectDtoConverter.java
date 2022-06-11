@@ -46,6 +46,7 @@ public class StorageObjectDtoConverter implements DtoConverter<StorageObjectDto,
                 storageObject.getName(),
                 storageObject.getObjectGroup(),
                 storageObject.isEncrypted(),
+                Objects.requireNonNull(storageObject.getDigest()),
                 storageObject.getStorageObjectAccesses()
                         .stream()
                         .map(storageObjectAccessDtoConverter::convertToDto)
