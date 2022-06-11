@@ -14,11 +14,21 @@
  * limitations under the License.
  */
 
-package dev.d1s.hole.exception;
+package dev.d1s.hole.exception.storage;
 
-public final class IllegalStorageRootException extends RuntimeException {
+import dev.d1s.advice.entity.ErrorResponseData;
+import dev.d1s.advice.exception.HttpStatusException;
+import dev.d1s.hole.constant.error.StorageObjectErrorConstants;
+import org.springframework.http.HttpStatus;
 
-    public IllegalStorageRootException(final String message) {
-        super(message);
+public final class StorageObjectAccessException extends HttpStatusException {
+
+    public StorageObjectAccessException() {
+        super(
+                new ErrorResponseData(
+                        HttpStatus.INTERNAL_SERVER_ERROR,
+                        StorageObjectErrorConstants.STORAGE_OBJECT_ACCESS_ERROR
+                )
+        );
     }
 }

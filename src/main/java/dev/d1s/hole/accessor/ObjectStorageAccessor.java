@@ -20,6 +20,7 @@ import dev.d1s.hole.entity.storageObject.StorageObject;
 import dev.d1s.hole.entity.storageObject.StorageObjectPart;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.OutputStream;
 import java.util.Set;
 
 public interface ObjectStorageAccessor {
@@ -27,6 +28,14 @@ public interface ObjectStorageAccessor {
     @NotNull
     Set<StorageObjectPart> findAllAssociatingParts(@NotNull final StorageObject object);
 
+    byte[] readPartBytes(@NotNull final StorageObjectPart part);
+
     @NotNull
-    StorageObjectPart resolveAsPart(@NotNull final StorageObject object, final int partId);
+    OutputStream createOutputStream(@NotNull final StorageObject object, final int partId);
+
+    void writeToOutputStream(@NotNull final OutputStream out, byte[] bytes);
+
+    void closeOutputStream(@NotNull final OutputStream out);
+
+    void deleteObject(@NotNull final StorageObject object);
 }

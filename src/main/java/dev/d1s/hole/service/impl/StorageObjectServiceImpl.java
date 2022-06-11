@@ -35,6 +35,7 @@ import dev.d1s.hole.entity.storageObject.StorageObjectAccess;
 import dev.d1s.hole.entity.storageObject.StorageObjectPart;
 import dev.d1s.hole.repository.StorageObjectAccessRepository;
 import dev.d1s.hole.repository.StorageObjectRepository;
+import dev.d1s.hole.service.EncryptionService;
 import dev.d1s.hole.service.MetadataService;
 import dev.d1s.hole.service.StorageObjectService;
 import dev.d1s.hole.util.FileNameUtils;
@@ -47,8 +48,6 @@ import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.codec.digest.MessageDigestAlgorithms;
 import org.apache.tika.Tika;
-import org.cryptonode.jncryptor.CryptorException;
-import org.cryptonode.jncryptor.JNCryptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.InitializingBean;
@@ -63,7 +62,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.file.Files;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashSet;
@@ -91,7 +89,7 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
 
     private AsyncLongPollingEventPublisher publisher;
 
-    private JNCryptor jnCryptor;
+    private EncryptionService encryptionService;
 
     private MetadataService metadataService;
 
@@ -99,13 +97,12 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
 
     private Cache digestCache;
 
-    @Lazy
     private StorageObjectServiceImpl storageObjectServiceImpl;
 
     @NotNull
     @Override
     @Transactional(readOnly = true)
-    public EntityWithDto<StorageObject, StorageObjectDto> getObject(@NotNull final String id, final boolean requireDto) throws NotFoundException {
+    public EntityWithDto<StorageObject, StorageObjectDto> getObject(@NotNull final String id, final boolean requireDto) {
         final var object = storageObjectRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException(StorageObjectErrorConstants.STORAGE_OBJECT_NOT_FOUND_ERROR));
 
@@ -124,23 +121,22 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
     @NotNull
     @Override
     @Transactional
-    public RawStorageObjectMetadata readRawObject(@NotNull final String id, @Nullable final String encryptionKey, @NotNull final OutputStream out) throws NotFoundException, CryptorException {
+    public RawStorageObjectMetadata readRawObject(@NotNull final String id, @Nullable final String encryptionKey, @NotNull final OutputStream out) {
         final var object = storageObjectServiceImpl.getObject(id, false).entity();
         final var objectName = object.getName();
 
         final var parts = objectStorageAccessor.findAllAssociatingParts(object);
 
         final var contentType = new AtomicReference<String>(null);
-        final var cryptorException = new AtomicReference<CryptorException>(null);
 
         parts.forEach(p -> {
             try {
-                var bytes = Files.readAllBytes(p.path());
+                var bytes = objectStorageAccessor.readPartBytes(p);
 
                 final var encrypted = object.isEncrypted();
 
                 if (encrypted && encryptionKey != null) {
-                    bytes = jnCryptor.decryptData(bytes, encryptionKey.toCharArray());
+                    bytes = encryptionService.decrypt(bytes, encryptionKey);
                 } else if (encrypted) {
                     throw new BadRequestException(EncryptionErrorConstants.ENCRYPTION_KEY_NOT_PRESENT_ERROR);
                 }
@@ -150,18 +146,10 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
                 }
 
                 out.write(bytes);
-            } catch (IOException | CryptorException e) {
-                if (e instanceof CryptorException casted) {
-                    cryptorException.set(casted);
-                } else {
-                    throw new RuntimeException(e);
-                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
         });
-
-        if (cryptorException.get() != null) {
-            throw cryptorException.get();
-        }
 
         final var objectAccess = storageObjectAccessRepository.save(new StorageObjectAccess(object));
 
@@ -205,7 +193,7 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
     @NotNull
     @Override
     @Transactional
-    public EntityWithDto<StorageObject, StorageObjectDto> createObject(@NotNull final MultipartFile content, @NotNull final String group, @Nullable final String encryptionKey) throws IOException, CryptorException {
+    public EntityWithDto<StorageObject, StorageObjectDto> createObject(@NotNull final MultipartFile content, @NotNull final String group, @Nullable final String encryptionKey) {
         final var object = storageObjectRepository.save(
                 new StorageObject(
                         FileNameUtils.sanitize(content.getOriginalFilename()),
@@ -273,7 +261,7 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
     }
 
     @Override
-    public void overwriteObject(@NotNull final String id, @NotNull final MultipartFile content, @Nullable final String encryptionKey) throws IOException, CryptorException {
+    public void overwriteObject(@NotNull final String id, @NotNull final MultipartFile content, @Nullable final String encryptionKey) {
         final var object = storageObjectServiceImpl.getObject(id, false).entity();
 
         final var encryptionUsed = encryptionKey != null;
@@ -295,7 +283,7 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
 
     @Override
     @Transactional
-    public void deleteObject(@NotNull final String id) throws NotFoundException {
+    public void deleteObject(@NotNull final String id) {
         final var object = storageObjectServiceImpl.getObject(id, false).entity();
 
         storageObjectRepository.delete(object);
@@ -322,31 +310,17 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
 
         objectStorageAccessor.findAllAssociatingParts(object)
                 .stream()
-                .map(p -> {
-                    try {
-                        return Files.newInputStream(p.path());
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                })
-                .forEach(in -> {
-                    try {
-                        DigestUtils.updateDigest(digest, in);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                });
+                .map(p -> objectStorageAccessor.readPartBytes(p))
+                .forEach(b -> DigestUtils.updateDigest(digest, b));
 
         return Hex.encodeHexString(digest.digest());
     }
 
-    private void writeObject(final StorageObject object, final String encryptionKey, final MultipartFile content) throws CryptorException, IOException {
+    private void writeObject(final StorageObject object, final String encryptionKey, final MultipartFile content) {
         var currentPartId = 0;
-        var out = this.newOutputStream(object, currentPartId);
+        var out = objectStorageAccessor.createOutputStream(object, currentPartId);
 
-        final var byteArrayBuilder = new ByteArrayBuilder();
-
-        try (final var in = content.getInputStream()) {
+        try (final var byteArrayBuilder = new ByteArrayBuilder(); final var in = content.getInputStream()) {
             while (true) {
                 final var b = in.read();
 
@@ -359,40 +333,31 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
 
                 if (byteArrayBuilder.size() == StorageObjectPart.SIZE) {
                     this.flushByteArrayBuilder(byteArrayBuilder, encryptionKey, out);
-                    out = this.newOutputStream(object, ++currentPartId);
+                    out = objectStorageAccessor.createOutputStream(object, ++currentPartId);
                 }
             }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         } finally {
-            out.close();
-            byteArrayBuilder.close();
+            objectStorageAccessor.closeOutputStream(out);
         }
     }
 
-    private void flushByteArrayBuilder(final ByteArrayBuilder byteArrayBuilder, final String encryptionKey, final OutputStream out) throws CryptorException, IOException {
+    private void flushByteArrayBuilder(final ByteArrayBuilder byteArrayBuilder, final String encryptionKey, final OutputStream out) {
         var bytes = byteArrayBuilder.toByteArray();
 
         if (encryptionKey != null) {
-            bytes = jnCryptor.encryptData(bytes, encryptionKey.toCharArray());
+            bytes = encryptionService.encrypt(bytes, encryptionKey);
         }
 
-        out.write(bytes);
-        out.close();
+        objectStorageAccessor.writeToOutputStream(out, bytes);
+        objectStorageAccessor.closeOutputStream(out);
 
         byteArrayBuilder.reset();
     }
 
-    private OutputStream newOutputStream(final StorageObject object, final int partId) throws IOException {
-        return Files.newOutputStream(objectStorageAccessor.resolveAsPart(object, partId).path());
-    }
-
     private void deleteObject(final StorageObject object) {
-        objectStorageAccessor.findAllAssociatingParts(object).forEach(p -> {
-            try {
-                Files.delete(p.path());
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
+        objectStorageAccessor.deleteObject(object);
 
         digestCache.evict(Objects.requireNonNull(object.getId()));
     }
@@ -440,8 +405,8 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
     }
 
     @Autowired
-    public void setJnCryptor(final JNCryptor jnCryptor) {
-        this.jnCryptor = jnCryptor;
+    public void setEncryptionService(final EncryptionService encryptionService) {
+        this.encryptionService = encryptionService;
     }
 
     @Autowired
@@ -450,10 +415,11 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
     }
 
     @Autowired
-    public void setCacheManager(final CacheManager cacheManager) {
+    public void setCacheManager(@SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection") final CacheManager cacheManager) {
         this.cacheManager = cacheManager;
     }
 
+    @Lazy
     @Autowired
     public void setStorageObjectServiceImpl(final StorageObjectServiceImpl storageObjectServiceImpl) {
         this.storageObjectServiceImpl = storageObjectServiceImpl;

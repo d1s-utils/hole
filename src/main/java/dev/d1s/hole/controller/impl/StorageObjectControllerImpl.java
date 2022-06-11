@@ -20,6 +20,7 @@ import dev.d1s.hole.constant.contentDisposition.ContentDispositionConstants;
 import dev.d1s.hole.controller.StorageObjectController;
 import dev.d1s.hole.dto.storageObject.StorageObjectDto;
 import dev.d1s.hole.dto.storageObject.StorageObjectUpdateDto;
+import dev.d1s.hole.entity.storageObject.RawStorageObjectMetadata;
 import dev.d1s.hole.entity.storageObject.StorageObject;
 import dev.d1s.hole.properties.SslConfigurationProperties;
 import dev.d1s.hole.service.StorageObjectService;
@@ -27,7 +28,6 @@ import dev.d1s.security.configuration.annotation.Secured;
 import dev.d1s.teabag.dto.DtoConverter;
 import dev.d1s.teabag.web.ServletUriComponentsBuilderKt;
 import io.undertow.util.Headers;
-import org.cryptonode.jncryptor.CryptorException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -67,8 +67,14 @@ public class StorageObjectControllerImpl implements StorageObjectController {
             @Nullable final String contentDisposition,
             @Nullable final String encryptionKey,
             @NotNull final HttpServletResponse response
-    ) throws IOException, CryptorException {
-        final var rawObject = storageObjectService.readRawObject(id, encryptionKey, response.getOutputStream());
+    ) {
+        final RawStorageObjectMetadata rawObject;
+
+        try {
+            rawObject = storageObjectService.readRawObject(id, encryptionKey, response.getOutputStream());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
         response.setHeader(
                 Headers.CONTENT_TYPE_STRING,
@@ -102,7 +108,7 @@ public class StorageObjectControllerImpl implements StorageObjectController {
     @NotNull
     @Secured
     @Override
-    public ResponseEntity<StorageObjectDto> postObject(@NotNull final MultipartFile content, @NotNull final String group, @Nullable final String encryptionKey) throws IOException, CryptorException {
+    public ResponseEntity<StorageObjectDto> postObject(@NotNull final MultipartFile content, @NotNull final String group, @Nullable final String encryptionKey) {
         final var createdObject = storageObjectService.createObject(content, group, encryptionKey).dto();
 
         return ResponseEntity.created(
@@ -131,7 +137,7 @@ public class StorageObjectControllerImpl implements StorageObjectController {
     @NotNull
     @Secured
     @Override
-    public ResponseEntity<?> putRawObject(@NotNull String id, @NotNull MultipartFile content, @Nullable final String encryptionKey) throws IOException, CryptorException {
+    public ResponseEntity<?> putRawObject(@NotNull String id, @NotNull MultipartFile content, @Nullable final String encryptionKey) {
         storageObjectService.overwriteObject(id, content, encryptionKey);
 
         return ResponseEntity.noContent().build();
@@ -140,7 +146,7 @@ public class StorageObjectControllerImpl implements StorageObjectController {
     @NotNull
     @Secured
     @Override
-    public ResponseEntity<?> deleteObject(@NotNull final String id) throws IOException {
+    public ResponseEntity<?> deleteObject(@NotNull final String id) {
         storageObjectService.deleteObject(id);
 
         return ResponseEntity.noContent().build();

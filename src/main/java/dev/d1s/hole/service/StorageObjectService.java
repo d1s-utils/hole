@@ -16,18 +16,15 @@
 
 package dev.d1s.hole.service;
 
-import dev.d1s.advice.exception.NotFoundException;
 import dev.d1s.hole.dto.common.EntityWithDto;
 import dev.d1s.hole.dto.common.EntityWithDtoSet;
 import dev.d1s.hole.dto.storageObject.StorageObjectDto;
 import dev.d1s.hole.entity.storageObject.RawStorageObjectMetadata;
 import dev.d1s.hole.entity.storageObject.StorageObject;
-import org.cryptonode.jncryptor.CryptorException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.io.OutputStream;
 
 public interface StorageObjectService {
@@ -36,14 +33,14 @@ public interface StorageObjectService {
     EntityWithDto<StorageObject, StorageObjectDto> getObject(
             @NotNull final String id,
             final boolean requireDto
-    ) throws NotFoundException;
+    );
 
     @NotNull
     RawStorageObjectMetadata readRawObject(
             @NotNull final String id,
             @Nullable final String encryptionKey,
             @NotNull final OutputStream out
-    ) throws NotFoundException, IOException, CryptorException;
+    );
 
     @NotNull
     EntityWithDtoSet<StorageObject, StorageObjectDto> getAllObjects(
@@ -56,23 +53,23 @@ public interface StorageObjectService {
             @NotNull final MultipartFile content,
             @NotNull final String group,
             @Nullable final String encryptionKey
-    ) throws IOException, CryptorException;
+    );
 
     @NotNull
     EntityWithDto<StorageObject, StorageObjectDto> updateObject(
             @NotNull final String id,
             @NotNull final StorageObject storageObject
-    ) throws NotFoundException;
+    );
 
     void overwriteObject(
             @NotNull final String id,
             @NotNull final MultipartFile content,
             @Nullable final String encryptionKey
-    ) throws NotFoundException, IOException, CryptorException;
+    );
 
     void deleteObject(
             @NotNull final String id
-    ) throws NotFoundException, IOException;
+    );
 
     String createSha256Digest(@NotNull final StorageObject object);
 }

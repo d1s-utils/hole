@@ -14,16 +14,13 @@
  * limitations under the License.
  */
 
-package dev.d1s.hole.constant.error;
+package dev.d1s.hole.service;
 
-public final class StorageObjectErrorConstants {
+import org.jetbrains.annotations.NotNull;
 
-    public static final String STORAGE_OBJECT_NOT_FOUND_ERROR =
-            "Storage object was not found.";
+public interface EncryptionService {
 
-    public static final String STORAGE_OBJECT_ACCESS_ERROR =
-            "Could not perform the I/O operation on the internal storage.";
+    byte[] encrypt(byte[] bytes, @NotNull final String encryptionKey);
 
-    private StorageObjectErrorConstants() {
-    }
+    byte[] decrypt(byte[] bytes, @NotNull final String encryptionKey);
 }

@@ -20,7 +20,7 @@ import dev.d1s.hole.constant.mapping.storageObject.StorageObjectRequestMappingCo
 import dev.d1s.hole.constant.regex.RegexConstants;
 import dev.d1s.hole.dto.storageObject.StorageObjectDto;
 import dev.d1s.hole.dto.storageObject.StorageObjectUpdateDto;
-import org.cryptonode.jncryptor.CryptorException;
+
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.http.ResponseEntity;
@@ -32,7 +32,6 @@ import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Pattern;
-import java.io.IOException;
 import java.util.Set;
 
 @Validated
@@ -56,7 +55,7 @@ public interface StorageObjectController {
             @Nullable
             @RequestParam(required = false) final String encryptionKey,
             @NotNull final HttpServletResponse response
-    ) throws IOException, CryptorException;
+    );
 
     @NotNull
     @GetMapping(StorageObjectRequestMappingConstants.GET_ALL_OBJECTS_MAPPING)
@@ -75,7 +74,7 @@ public interface StorageObjectController {
             @Pattern(regexp = RegexConstants.COMMON_NAME_REGEX) final String group,
             @Nullable
             @RequestParam(required = false) final String encryptionKey
-    ) throws IOException, CryptorException;
+    );
 
     @NotNull
     @PutMapping(StorageObjectRequestMappingConstants.PUT_OBJECT_MAPPING)
@@ -98,7 +97,7 @@ public interface StorageObjectController {
             @RequestParam final MultipartFile content,
             @Nullable
             @RequestParam(required = false) final String encryptionKey
-    ) throws IOException, CryptorException;
+    );
 
     @NotNull
     @DeleteMapping(StorageObjectRequestMappingConstants.DELETE_OBJECT_MAPPING)
@@ -106,5 +105,5 @@ public interface StorageObjectController {
             @NotNull
             @PathVariable
             @NotBlank final String id
-    ) throws IOException;
+    );
 }

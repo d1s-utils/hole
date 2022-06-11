@@ -14,16 +14,11 @@
  * limitations under the License.
  */
 
-package dev.d1s.hole.constant.error;
+package dev.d1s.hole.exception.storage;
 
-public final class StorageObjectErrorConstants {
+public final class IllegalStorageRootException extends RuntimeException {
 
-    public static final String STORAGE_OBJECT_NOT_FOUND_ERROR =
-            "Storage object was not found.";
-
-    public static final String STORAGE_OBJECT_ACCESS_ERROR =
-            "Could not perform the I/O operation on the internal storage.";
-
-    private StorageObjectErrorConstants() {
+    public IllegalStorageRootException(final String message) {
+        super(message);
     }
 }
