@@ -21,12 +21,14 @@ val teabagsVersion: String by project
 val tikaVersion: String by project
 val jnCryptorVersion: String by project
 val jetbrainsAnnotationsVersion: String by project
+val apacheCommonsCodecVersion: String by project
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-undertow")
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+    implementation("org.springframework.boot:spring-boot-starter-cache")
     implementation("org.mariadb.jdbc:mariadb-java-client")
     implementation("org.liquibase:liquibase-core:$liquibaseVersion")
     implementation("dev.d1s:spring-boot-starter-advice:$starterAdviceVersion")
@@ -38,6 +40,7 @@ dependencies {
     implementation("org.apache.tika:tika-core:$tikaVersion")
     implementation("org.cryptonode.jncryptor:jncryptor:$jnCryptorVersion")
     implementation("org.jetbrains:annotations:$jetbrainsAnnotationsVersion")
+    implementation("commons-codec:commons-codec:$apacheCommonsCodecVersion")
     implementation(kotlin("stdlib")) // for backwards compatibility
     compileOnly("org.projectlombok:lombok")
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")

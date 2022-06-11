@@ -47,6 +47,10 @@ public final class StorageObject extends Identifiable {
     private boolean encrypted;
 
     @NotNull
+    @Transient
+    private String digest;
+
+    @NotNull
     @OneToMany(mappedBy = "storageObject", cascade = CascadeType.ALL)
     private Set<StorageObjectAccess> storageObjectAccesses;
 

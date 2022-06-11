@@ -14,37 +14,12 @@
  * limitations under the License.
  */
 
-package dev.d1s.hole.dto.storageObject;
+package dev.d1s.hole.configuration;
 
-import dev.d1s.hole.dto.metadata.MetadataPropertyDto;
-import org.jetbrains.annotations.NotNull;
+import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.context.annotation.Configuration;
 
-import java.time.Instant;
-import java.util.Set;
-
-public record StorageObjectDto(
-
-        @NotNull
-        String id,
-
-        @NotNull
-        Instant creationTime,
-
-        @NotNull
-        String name,
-
-        @NotNull
-        String group,
-
-        boolean encrypted,
-
-        @NotNull
-        String digest,
-
-        @NotNull
-        Set<StorageObjectAccessDto> accesses,
-
-        @NotNull
-        Set<MetadataPropertyDto> metadata
-) {
+@Configuration
+@EnableCaching
+public class CachingConfiguration {
 }

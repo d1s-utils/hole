@@ -73,4 +73,6 @@ public interface StorageObjectService {
     void deleteObject(
             @NotNull final String id
     ) throws NotFoundException, IOException;
+
+    String createSha256Digest(@NotNull final StorageObject object);
 }
