@@ -14,19 +14,21 @@
  * limitations under the License.
  */
 
-package dev.d1s.hole.constant.error;
+package dev.d1s.hole.exception.storage;
 
-public final class StorageObjectErrorConstants {
+import dev.d1s.advice.entity.ErrorResponseData;
+import dev.d1s.advice.exception.HttpStatusException;
+import dev.d1s.hole.constant.error.StorageObjectErrorConstants;
+import org.springframework.http.HttpStatus;
 
-    public static final String STORAGE_OBJECT_NOT_FOUND_ERROR =
-            "Storage object was not found.";
+public final class StorageObjectLockedException extends HttpStatusException {
 
-    public static final String STORAGE_OBJECT_ACCESS_ERROR =
-            "Could not perform the I/O operation on the internal storage.";
-
-    public static final String STORAGE_OBJECT_LOCKED_ERROR =
-            "Storage object is locked. Please try again later.";
-
-    private StorageObjectErrorConstants() {
+    public StorageObjectLockedException() {
+        super(
+                new ErrorResponseData(
+                        HttpStatus.CONFLICT,
+                        StorageObjectErrorConstants.STORAGE_OBJECT_LOCKED_ERROR
+                )
+        );
     }
 }

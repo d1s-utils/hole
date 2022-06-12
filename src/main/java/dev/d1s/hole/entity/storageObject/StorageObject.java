@@ -93,4 +93,14 @@ public final class StorageObject extends Identifiable {
     public int hashCode() {
         return Objects.hash(this.getId(), this.getCreationTime(), this.name, this.objectGroup, this.encrypted);
     }
+
+    @Override
+    public String toString() {
+        return "StorageObject{" +
+                "name='" + name + '\'' +
+                ", objectGroup='" + objectGroup + '\'' +
+                ", encrypted=" + encrypted +
+                ", digest='" + digest + '\'' +
+                '}';
+    }
 }

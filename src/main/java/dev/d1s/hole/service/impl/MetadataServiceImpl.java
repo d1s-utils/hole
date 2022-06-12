@@ -19,6 +19,8 @@ package dev.d1s.hole.service.impl;
 import dev.d1s.hole.entity.metadata.MetadataProperty;
 import dev.d1s.hole.repository.MetadataPropertyRepository;
 import dev.d1s.hole.service.MetadataService;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -29,20 +31,30 @@ import java.util.Optional;
 @Service
 public class MetadataServiceImpl implements MetadataService {
 
+    private static final Logger log = LogManager.getLogger();
+
     private MetadataPropertyRepository metadataPropertyRepository;
 
     @NotNull
     @Override
     @Transactional(readOnly = true)
     public Optional<MetadataProperty> findMetadataPropertyByPropertyNameAndValue(@NotNull final String property, @NotNull final String value) {
-        return metadataPropertyRepository.findByPropertyAndValue(property, value);
+        final var foundMetadata = metadataPropertyRepository.findByPropertyAndValue(property, value);
+
+        log.debug("findMetadataPropertyByPropertyNameAndValue: {}", foundMetadata);
+
+        return foundMetadata;
     }
 
     @NotNull
     @Override
     @Transactional
     public MetadataProperty saveMetadataProperty(@NotNull MetadataProperty metadataProperty) {
-        return metadataPropertyRepository.save(metadataProperty);
+        final var savedMetadata = metadataPropertyRepository.save(metadataProperty);
+
+        log.debug("saveMetadataProperty: {}", savedMetadata);
+
+        return savedMetadata;
     }
 
     @Autowired

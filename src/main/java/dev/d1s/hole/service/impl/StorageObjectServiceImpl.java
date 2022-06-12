@@ -35,6 +35,7 @@ import dev.d1s.hole.entity.storageObject.StorageObjectPart;
 import dev.d1s.hole.repository.StorageObjectAccessRepository;
 import dev.d1s.hole.repository.StorageObjectRepository;
 import dev.d1s.hole.service.EncryptionService;
+import dev.d1s.hole.service.LockService;
 import dev.d1s.hole.service.MetadataService;
 import dev.d1s.hole.service.StorageObjectService;
 import dev.d1s.hole.util.FileNameUtils;
@@ -44,6 +45,8 @@ import dev.d1s.teabag.dto.DtoSetConverterFacade;
 import dev.d1s.teabag.dto.util.DtoConverterExtKt;
 import dev.d1s.teabag.dto.util.DtoSetConverterFacadeExtKt;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.tika.Tika;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,6 +67,8 @@ import java.util.stream.Collectors;
 @Service
 public class StorageObjectServiceImpl implements StorageObjectService, InitializingBean {
 
+    private static final Logger log = LogManager.getLogger();
+
     private StorageObjectRepository storageObjectRepository;
 
     private StorageObjectAccessRepository storageObjectAccessRepository;
@@ -82,6 +87,8 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
 
     private EncryptionService encryptionService;
 
+    private LockService lockService;
+
     private MetadataService metadataService;
 
     private StorageObjectServiceImpl storageObjectServiceImpl;
@@ -92,6 +99,8 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
     public EntityWithDto<StorageObject, StorageObjectDto> getObject(@NotNull final String id, final boolean requireDto) {
         final var object = storageObjectRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException(StorageObjectErrorConstants.STORAGE_OBJECT_NOT_FOUND_ERROR));
+
+        log.debug("Found storage object: {}", object);
 
         return new EntityWithDto<>(
                 object,
@@ -110,31 +119,37 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
         final var object = storageObjectServiceImpl.getObject(id, false).entity();
         final var objectName = object.getName();
 
-        final var parts = objectStorageAccessor.findAllAssociatingParts(object);
+        final AtomicReference<String> contentType = new AtomicReference<>(null);
 
-        final var contentType = new AtomicReference<String>(null);
+        try {
+            lockService.lock(id);
 
-        parts.forEach(p -> {
-            try {
-                var bytes = objectStorageAccessor.readPartBytes(p);
+            final var parts = objectStorageAccessor.findAllAssociatingParts(object);
 
-                final var encrypted = object.isEncrypted();
+            parts.forEach(p -> {
+                try {
+                    var bytes = objectStorageAccessor.readPartBytes(p);
 
-                if (encrypted && encryptionKey != null) {
-                    bytes = encryptionService.decrypt(bytes, encryptionKey);
-                } else if (encrypted) {
-                    throw new BadRequestException(EncryptionErrorConstants.ENCRYPTION_KEY_NOT_PRESENT_ERROR);
+                    final var encrypted = object.isEncrypted();
+
+                    if (encrypted && encryptionKey != null) {
+                        bytes = encryptionService.decrypt(bytes, encryptionKey);
+                    } else if (encrypted) {
+                        throw new BadRequestException(EncryptionErrorConstants.ENCRYPTION_KEY_NOT_PRESENT_ERROR);
+                    }
+
+                    if (contentType.get() == null) {
+                        contentType.set(tika.detect(bytes, objectName));
+                    }
+
+                    out.write(bytes);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
                 }
-
-                if (contentType.get() == null) {
-                    contentType.set(tika.detect(bytes, objectName));
-                }
-
-                out.write(bytes);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
+            });
+        } finally {
+            lockService.unlock(id);
+        }
 
         final var objectAccess = storageObjectAccessRepository.save(new StorageObjectAccess(object));
 
@@ -147,6 +162,8 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
                 object.getId(),
                 storageObjectAccessDtoConverter.convertToDto(objectAccess)
         );
+
+        log.debug("Read raw storage object: {}", object);
 
         return new RawStorageObjectMetadata(objectName, contentType.get());
     }
@@ -162,6 +179,8 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
         } else {
             objects = new HashSet<>(storageObjectRepository.findAll());
         }
+
+        log.debug("Found storage objects: {}", objects);
 
         return new EntityWithDtoSet<>(
                 objects,
@@ -187,7 +206,13 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
                 )
         );
 
-        this.writeObject(object, encryptionKey, content);
+        try {
+            lockService.lock(object);
+
+            this.writeObject(object, encryptionKey, content);
+        } finally {
+            lockService.unlock(object);
+        }
 
         final var objectDto = storageObjectDtoConverter.convertToDto(object);
 
@@ -196,6 +221,8 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
                 object.getId(),
                 objectDto
         );
+
+        log.debug("Created storage object: {}", object);
 
         return new EntityWithDto<>(object, objectDto);
     }
@@ -237,6 +264,8 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
                 objectDto
         );
 
+        log.debug("Updated storage object: {}", savedObject);
+
         return new EntityWithDto<>(savedObject, objectDto);
     }
 
@@ -256,15 +285,23 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
             storageObjectRepository.save(object);
         }
 
+        try {
+            lockService.lock(object);
+
+            objectStorageAccessor.deleteObject(object);
+
+            this.writeObject(object, encryptionKey, content);
+        } finally {
+            lockService.unlock(object);
+        }
+
         publisher.publish(
                 StorageObjectLongPollingConstants.STORAGE_OBJECT_OVERWRITTEN_GROUP,
                 object.getId(),
                 null
         );
 
-        objectStorageAccessor.deleteObject(object);
-
-        this.writeObject(object, encryptionKey, content);
+        log.debug("Overwrote storage object: {}", object);
     }
 
     @Override
@@ -274,13 +311,22 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
 
         storageObjectRepository.delete(object);
 
-        objectStorageAccessor.deleteObject(object);
+        try {
+            lockService.lock(object);
+
+            objectStorageAccessor.deleteObject(object);
+        } finally {
+            lockService.unlock(object);
+            lockService.removeLock(object);
+        }
 
         publisher.publish(
                 StorageObjectLongPollingConstants.STORAGE_OBJECT_DELETED_GROUP,
                 object.getId(),
                 storageObjectDtoConverter.convertToDto(object)
         );
+
+        log.debug("Deleted storage object: {}", object);
     }
 
     private void writeObject(final StorageObject object, final String encryptionKey, final MultipartFile content) {
@@ -374,6 +420,11 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
     @Autowired
     public void setEncryptionService(final EncryptionService encryptionService) {
         this.encryptionService = encryptionService;
+    }
+
+    @Autowired
+    public void setLockService(final LockService lockService) {
+        this.lockService = lockService;
     }
 
     @Autowired

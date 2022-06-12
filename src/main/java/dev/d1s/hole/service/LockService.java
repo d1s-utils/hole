@@ -14,19 +14,20 @@
  * limitations under the License.
  */
 
-package dev.d1s.hole.constant.error;
+package dev.d1s.hole.service;
 
-public final class StorageObjectErrorConstants {
+import dev.d1s.hole.entity.storageObject.StorageObject;
+import org.jetbrains.annotations.NotNull;
 
-    public static final String STORAGE_OBJECT_NOT_FOUND_ERROR =
-            "Storage object was not found.";
+public interface LockService {
 
-    public static final String STORAGE_OBJECT_ACCESS_ERROR =
-            "Could not perform the I/O operation on the internal storage.";
+    void lock(@NotNull final String id);
 
-    public static final String STORAGE_OBJECT_LOCKED_ERROR =
-            "Storage object is locked. Please try again later.";
+    void lock(@NotNull final StorageObject object);
 
-    private StorageObjectErrorConstants() {
-    }
+    void unlock(@NotNull final String id);
+
+    void unlock(@NotNull final StorageObject object);
+
+    void removeLock(@NotNull final StorageObject object);
 }
