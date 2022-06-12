@@ -67,9 +67,5 @@ public interface StorageObjectService {
             @Nullable final String encryptionKey
     );
 
-    void deleteObject(
-            @NotNull final String id
-    );
-
-    String createSha256Digest(@NotNull final StorageObject object);
+    void deleteObject(@NotNull final String id);
 }

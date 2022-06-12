@@ -20,7 +20,6 @@ import com.fasterxml.jackson.core.util.ByteArrayBuilder;
 import dev.d1s.advice.exception.BadRequestException;
 import dev.d1s.advice.exception.NotFoundException;
 import dev.d1s.hole.accessor.ObjectStorageAccessor;
-import dev.d1s.hole.constant.cache.CacheNameConstants;
 import dev.d1s.hole.constant.error.EncryptionErrorConstants;
 import dev.d1s.hole.constant.error.MetadataErrorConstants;
 import dev.d1s.hole.constant.error.StorageObjectErrorConstants;
@@ -44,17 +43,12 @@ import dev.d1s.teabag.dto.DtoConverter;
 import dev.d1s.teabag.dto.DtoSetConverterFacade;
 import dev.d1s.teabag.dto.util.DtoConverterExtKt;
 import dev.d1s.teabag.dto.util.DtoSetConverterFacadeExtKt;
-import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.commons.codec.digest.MessageDigestAlgorithms;
 import org.apache.tika.Tika;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.Cache;
-import org.springframework.cache.CacheManager;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -62,10 +56,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -93,10 +84,6 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
 
     private MetadataService metadataService;
 
-    private CacheManager cacheManager;
-
-    private Cache digestCache;
-
     private StorageObjectServiceImpl storageObjectServiceImpl;
 
     @NotNull
@@ -105,8 +92,6 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
     public EntityWithDto<StorageObject, StorageObjectDto> getObject(@NotNull final String id, final boolean requireDto) {
         final var object = storageObjectRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException(StorageObjectErrorConstants.STORAGE_OBJECT_NOT_FOUND_ERROR));
-
-        object.setDigest(storageObjectServiceImpl.createSha256Digest(object));
 
         return new EntityWithDto<>(
                 object,
@@ -178,8 +163,6 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
             objects = new HashSet<>(storageObjectRepository.findAll());
         }
 
-        objects.forEach(o -> o.setDigest(storageObjectServiceImpl.createSha256Digest(o)));
-
         return new EntityWithDtoSet<>(
                 objects,
                 DtoSetConverterFacadeExtKt.convertToDtoSetIf(
@@ -199,13 +182,12 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
                         FileNameUtils.sanitize(content.getOriginalFilename()),
                         group,
                         encryptionKey != null,
+                        this.createSha256Digest(content),
                         new HashSet<>()
                 )
         );
 
         this.writeObject(object, encryptionKey, content);
-
-        object.setDigest(storageObjectServiceImpl.createSha256Digest(object));
 
         final var objectDto = storageObjectDtoConverter.convertToDto(object);
 
@@ -247,8 +229,6 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
 
         final var savedObject = storageObjectRepository.save(foundObject);
 
-        savedObject.setDigest(storageObjectServiceImpl.createSha256Digest(savedObject));
-
         final var objectDto = storageObjectDtoConverter.convertToDto(savedObject);
 
         publisher.publish(
@@ -267,8 +247,12 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
 
         final var encryptionUsed = encryptionKey != null;
 
-        if (object.isEncrypted() != encryptionUsed) {
+        final var digest = this.createSha256Digest(content);
+
+        if (object.isEncrypted() != encryptionUsed || !digest.equals(object.getDigest())) {
             object.setEncrypted(encryptionUsed);
+            object.setDigest(digest);
+
             storageObjectRepository.save(object);
         }
 
@@ -278,7 +262,7 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
                 null
         );
 
-        this.deleteObject(object);
+        objectStorageAccessor.deleteObject(object);
 
         this.writeObject(object, encryptionKey, content);
     }
@@ -290,32 +274,13 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
 
         storageObjectRepository.delete(object);
 
-        this.deleteObject(object);
+        objectStorageAccessor.deleteObject(object);
 
         publisher.publish(
                 StorageObjectLongPollingConstants.STORAGE_OBJECT_DELETED_GROUP,
                 object.getId(),
                 storageObjectDtoConverter.convertToDto(object)
         );
-    }
-
-    @Override
-    @Cacheable(cacheNames = CacheNameConstants.SHA256_DIGEST_CACHE, key = "#object.id")
-    public String createSha256Digest(@NotNull StorageObject object) {
-        final MessageDigest digest;
-
-        try {
-            digest = MessageDigest.getInstance(MessageDigestAlgorithms.SHA_256);
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        }
-
-        objectStorageAccessor.findAllAssociatingParts(object)
-                .stream()
-                .map(p -> objectStorageAccessor.readPartBytes(p))
-                .forEach(b -> DigestUtils.updateDigest(digest, b));
-
-        return Hex.encodeHexString(digest.digest());
     }
 
     private void writeObject(final StorageObject object, final String encryptionKey, final MultipartFile content) {
@@ -358,17 +323,17 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
         byteArrayBuilder.reset();
     }
 
-    private void deleteObject(final StorageObject object) {
-        objectStorageAccessor.deleteObject(object);
-
-        digestCache.evict(Objects.requireNonNull(object.getId()));
+    private String createSha256Digest(final MultipartFile content) {
+        try (final var in = content.getInputStream()) {
+            return DigestUtils.sha256Hex(in);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
     public void afterPropertiesSet() {
         this.storageObjectDtoSetConverter = DtoConverterExtKt.converterForSet(this.storageObjectDtoConverter);
-
-        this.digestCache = cacheManager.getCache(CacheNameConstants.SHA256_DIGEST_CACHE);
     }
 
     @Autowired
@@ -414,11 +379,6 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
     @Autowired
     public void setMetadataService(final MetadataService metadataService) {
         this.metadataService = metadataService;
-    }
-
-    @Autowired
-    public void setCacheManager(@SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection") final CacheManager cacheManager) {
-        this.cacheManager = cacheManager;
     }
 
     @Lazy

@@ -39,6 +39,9 @@
             <column name="encrypted" type="bool">
                 <constraints nullable="false"/>
             </column>
+            <column name="digest" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
         </createTable>
 
         <createTable tableName="storage_object_access">

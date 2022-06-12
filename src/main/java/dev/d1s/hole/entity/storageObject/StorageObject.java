@@ -22,6 +22,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.persistence.*;
 import java.util.HashSet;
@@ -46,8 +47,8 @@ public final class StorageObject extends Identifiable {
     @Column(nullable = false)
     private boolean encrypted;
 
-    @NotNull
-    @Transient
+    @Nullable
+    @Column(nullable = false)
     private String digest;
 
     @NotNull
@@ -63,16 +64,17 @@ public final class StorageObject extends Identifiable {
     )
     private Set<MetadataProperty> metadata;
 
-    public StorageObject(@NotNull final String name, @NotNull final String objectGroup, final boolean encrypted, @NotNull final Set<MetadataProperty> metadata) {
+    public StorageObject(@NotNull final String name, @NotNull final String objectGroup, final boolean encrypted, @Nullable final String digest, @NotNull final Set<MetadataProperty> metadata) {
         this.name = name;
         this.objectGroup = objectGroup;
         this.encrypted = encrypted;
+        this.digest = digest;
         this.metadata = metadata;
         this.storageObjectAccesses = new HashSet<>();
     }
 
     public StorageObject(@NotNull final String name, @NotNull final String objectGroup, @NotNull final Set<MetadataProperty> metadata) {
-        this(name, objectGroup, false, metadata);
+        this(name, objectGroup, false, null, metadata);
     }
 
     @Override
