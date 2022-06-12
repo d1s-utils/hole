@@ -261,6 +261,7 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
     }
 
     @Override
+    @Transactional
     public void overwriteObject(@NotNull final String id, @NotNull final MultipartFile content, @Nullable final String encryptionKey) {
         final var object = storageObjectServiceImpl.getObject(id, false).entity();
 
@@ -268,6 +269,7 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
 
         if (object.isEncrypted() != encryptionUsed) {
             object.setEncrypted(encryptionUsed);
+            storageObjectRepository.save(object);
         }
 
         publisher.publish(
