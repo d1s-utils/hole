@@ -16,13 +16,21 @@
 
 package dev.d1s.hole.util;
 
-// liquibase actually has some utility class for sanitizing file names, so I'll use that instead of implementing my own.
+// liquibase actually has an utility class for sanitizing file names, so I'll use that instead of implementing my own.
 
+import dev.d1s.advice.exception.BadRequestException;
+import dev.d1s.hole.constant.error.StorageObjectErrorConstants;
 import liquibase.util.FilenameUtil;
+import org.jetbrains.annotations.NotNull;
 
 public final class FileNameUtils {
 
-    public static String sanitize(final String fileName) {
+    @NotNull
+    public static String sanitizeAndCheck(final String fileName) {
+        if (fileName == null) {
+            throw new BadRequestException(StorageObjectErrorConstants.FILE_NAME_NOT_RPESENT_ERROR);
+        }
+
         return FilenameUtil.normalize(
                 FilenameUtil.sanitizeFileName(fileName)
         );

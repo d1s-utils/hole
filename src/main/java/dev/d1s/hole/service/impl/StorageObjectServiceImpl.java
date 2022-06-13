@@ -198,7 +198,7 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
     public EntityWithDto<StorageObject, StorageObjectDto> createObject(@NotNull final MultipartFile content, @NotNull final String group, @Nullable final String encryptionKey) {
         final var object = storageObjectRepository.save(
                 new StorageObject(
-                        FileNameUtils.sanitize(content.getOriginalFilename()),
+                        FileNameUtils.sanitizeAndCheck(content.getOriginalFilename()),
                         group,
                         encryptionKey != null,
                         this.createSha256Digest(content),
@@ -278,9 +278,12 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
 
         final var digest = this.createSha256Digest(content);
 
-        if (object.isEncrypted() != encryptionUsed || !digest.equals(object.getDigest())) {
+        if (encryptionUsed != object.isEncrypted()
+                || !digest.equals(object.getDigest())
+                || !FileNameUtils.sanitizeAndCheck(content.getOriginalFilename()).equals(object.getName())) {
             object.setEncrypted(encryptionUsed);
             object.setDigest(digest);
+
 
             storageObjectRepository.save(object);
         }

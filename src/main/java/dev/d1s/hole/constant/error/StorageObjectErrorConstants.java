@@ -27,6 +27,9 @@ public final class StorageObjectErrorConstants {
     public static final String STORAGE_OBJECT_LOCKED_ERROR =
             "Storage object is locked. Please try again later.";
 
+    public static final String FILE_NAME_NOT_RPESENT_ERROR =
+            "File name must be present within the request.";
+
     private StorageObjectErrorConstants() {
     }
 }
