@@ -106,6 +106,14 @@ public class StorageObjectControllerImpl implements StorageObjectController {
     }
 
     @NotNull
+    @Override
+    public ResponseEntity<Set<String>> getAvailableGroups() {
+        return ResponseEntity.ok(
+                storageObjectService.getAvailableGroups()
+        );
+    }
+
+    @NotNull
     @Secured
     @Override
     public ResponseEntity<StorageObjectDto> postObject(@NotNull final MultipartFile content, @NotNull final String group, @Nullable final String encryptionKey) {

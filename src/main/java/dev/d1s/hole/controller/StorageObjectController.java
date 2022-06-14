@@ -20,7 +20,6 @@ import dev.d1s.hole.constant.mapping.storageObject.StorageObjectRequestMappingCo
 import dev.d1s.hole.constant.regex.RegexConstants;
 import dev.d1s.hole.dto.storageObject.StorageObjectDto;
 import dev.d1s.hole.dto.storageObject.StorageObjectUpdateDto;
-
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.http.ResponseEntity;
@@ -63,6 +62,10 @@ public interface StorageObjectController {
             @Nullable
             @RequestParam(required = false) final String group
     );
+
+    @NotNull
+    @GetMapping(StorageObjectRequestMappingConstants.GET_AVAILABLE_GROUPS_MAPPING)
+    ResponseEntity<Set<String>> getAvailableGroups();
 
     @NotNull
     @PostMapping(StorageObjectRequestMappingConstants.POST_OBJECT_MAPPING)

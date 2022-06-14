@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.OutputStream;
+import java.util.Set;
 
 public interface StorageObjectService {
 
@@ -47,6 +48,9 @@ public interface StorageObjectService {
             @Nullable final String group,
             final boolean requireDto
     );
+
+    @NotNull
+    Set<String> getAvailableGroups();
 
     @NotNull
     EntityWithDto<StorageObject, StorageObjectDto> createObject(

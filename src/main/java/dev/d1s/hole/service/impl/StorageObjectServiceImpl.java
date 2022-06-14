@@ -194,6 +194,13 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
 
     @NotNull
     @Override
+    @Transactional(readOnly = true)
+    public Set<String> getAvailableGroups() {
+        return storageObjectRepository.findAllGroups();
+    }
+
+    @NotNull
+    @Override
     @Transactional
     public EntityWithDto<StorageObject, StorageObjectDto> createObject(@NotNull final MultipartFile content, @NotNull final String group, @Nullable final String encryptionKey) {
         final var object = storageObjectRepository.save(

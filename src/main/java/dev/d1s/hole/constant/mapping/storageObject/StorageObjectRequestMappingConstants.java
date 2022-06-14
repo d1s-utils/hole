@@ -38,6 +38,9 @@ public final class StorageObjectRequestMappingConstants {
     public static final String GET_ALL_OBJECTS_MAPPING =
             StorageObjectRequestMappingConstants.STORAGE_OBJECT_BASE_MAPPING;
 
+    public static final String GET_AVAILABLE_GROUPS_MAPPING =
+            StorageObjectRequestMappingConstants.STORAGE_OBJECT_BASE_MAPPING + "/groups";
+
     public static final String POST_OBJECT_MAPPING =
             StorageObjectRequestMappingConstants.STORAGE_OBJECT_BASE_MAPPING;
 
