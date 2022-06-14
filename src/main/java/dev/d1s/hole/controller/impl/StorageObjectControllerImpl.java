@@ -106,6 +106,7 @@ public class StorageObjectControllerImpl implements StorageObjectController {
     }
 
     @NotNull
+    @Secured
     @Override
     public ResponseEntity<Set<String>> getAvailableGroups() {
         return ResponseEntity.ok(
