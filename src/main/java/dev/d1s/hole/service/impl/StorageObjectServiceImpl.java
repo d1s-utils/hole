@@ -285,18 +285,20 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
 
         final var digest = this.createSha256Digest(content);
 
-        if (encryptionUsed != object.isEncrypted()
-                || !digest.equals(object.getDigest())
-                || !FileNameUtils.sanitizeAndCheck(content.getOriginalFilename()).equals(object.getName())) {
-            object.setEncrypted(encryptionUsed);
-            object.setDigest(digest);
-
-
-            storageObjectRepository.save(object);
-        }
+        final var sanitizedFileName = FileNameUtils.sanitizeAndCheck(content.getOriginalFilename());
 
         try {
             lockService.lock(object);
+
+            if (encryptionUsed != object.isEncrypted()
+                    || !digest.equals(object.getDigest())
+                    || !sanitizedFileName.equals(object.getName())) {
+                object.setEncrypted(encryptionUsed);
+                object.setDigest(digest);
+                object.setName(sanitizedFileName);
+
+                storageObjectRepository.save(object);
+            }
 
             objectStorageAccessor.deleteObject(object);
 
