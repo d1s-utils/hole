@@ -123,7 +123,7 @@ public class StorageObjectControllerImpl implements StorageObjectController {
         return ResponseEntity.created(
                 ServletUriComponentsBuilderKt.buildFromCurrentRequest(b -> {
                             ServletUriComponentsBuilderKt.configureSsl(b, sslConfigurationProperties.isFallBackToHttps());
-                            return b.path(Objects.requireNonNull(createdObject).id())
+                            return b.path("/" + Objects.requireNonNull(createdObject).id())
                                     .build()
                                     .toUri();
                         }
