@@ -71,7 +71,7 @@ public class ObjectStorageAccessorImpl implements ObjectStorageAccessor, Initial
         try {
             return Files.readAllBytes(this.getPath(part.objectId(), part.partId()));
         } catch (IOException e) {
-            throw this.createException();
+            throw this.createException(e);
         }
     }
 
@@ -81,7 +81,7 @@ public class ObjectStorageAccessorImpl implements ObjectStorageAccessor, Initial
         try {
             return Files.newOutputStream(this.getPath(object, partId));
         } catch (IOException e) {
-            throw this.createException();
+            throw this.createException(e);
         }
     }
 
@@ -90,7 +90,7 @@ public class ObjectStorageAccessorImpl implements ObjectStorageAccessor, Initial
         try {
             out.write(bytes);
         } catch (IOException e) {
-            throw this.createException();
+            throw this.createException(e);
         }
     }
 
@@ -99,7 +99,7 @@ public class ObjectStorageAccessorImpl implements ObjectStorageAccessor, Initial
         try {
             out.close();
         } catch (IOException e) {
-            throw this.createException();
+            throw this.createException(e);
         }
     }
 
@@ -109,7 +109,7 @@ public class ObjectStorageAccessorImpl implements ObjectStorageAccessor, Initial
             try {
                 Files.delete(this.getPath(object, p.partId()));
             } catch (IOException e) {
-                throw this.createException();
+                throw this.createException(e);
             }
         });
     }
@@ -148,11 +148,9 @@ public class ObjectStorageAccessorImpl implements ObjectStorageAccessor, Initial
         return this.getPath(Objects.requireNonNull(object.getId()), partId);
     }
 
-    private StorageObjectAccessException createException() {
-        final var exception = new StorageObjectAccessException();
-        exception.printStackTrace();
-
-        return exception;
+    private StorageObjectAccessException createException(final IOException e) {
+        e.printStackTrace();
+        return new StorageObjectAccessException();
     }
 
     @Lazy
