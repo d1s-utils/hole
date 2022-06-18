@@ -41,7 +41,7 @@ services:
       SPRING_PROFILES_ACTIVE: dev
     restart: on-failure
     volumes:
-      - /home/d1snin/.hole:/hole
+      - ~/.hole:/hole
 
 networks:
   hole-net:
