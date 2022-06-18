@@ -20,6 +20,7 @@ import com.fasterxml.jackson.core.util.ByteArrayBuilder;
 import dev.d1s.advice.exception.BadRequestException;
 import dev.d1s.advice.exception.NotFoundException;
 import dev.d1s.hole.accessor.ObjectStorageAccessor;
+import dev.d1s.hole.constant.contentDisposition.ContentDispositionConstants;
 import dev.d1s.hole.constant.error.EncryptionErrorConstants;
 import dev.d1s.hole.constant.error.MetadataErrorConstants;
 import dev.d1s.hole.constant.error.StorageObjectErrorConstants;
@@ -28,7 +29,6 @@ import dev.d1s.hole.dto.common.EntityWithDto;
 import dev.d1s.hole.dto.common.EntityWithDtoSet;
 import dev.d1s.hole.dto.storageObject.StorageObjectAccessDto;
 import dev.d1s.hole.dto.storageObject.StorageObjectDto;
-import dev.d1s.hole.entity.storageObject.RawStorageObjectMetadata;
 import dev.d1s.hole.entity.storageObject.StorageObject;
 import dev.d1s.hole.entity.storageObject.StorageObjectAccess;
 import dev.d1s.hole.entity.storageObject.StorageObjectPart;
@@ -53,15 +53,18 @@ import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 @Service
@@ -112,14 +115,38 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
         );
     }
 
-    @NotNull
     @Override
     @Transactional
-    public RawStorageObjectMetadata readRawObject(@NotNull final String id, @Nullable final String encryptionKey, @NotNull final OutputStream out) {
+    public void writeRawObjectToWeb(
+            @NotNull final String id,
+            @Nullable final String encryptionKey,
+            @NotNull final HttpServletResponse response,
+            @Nullable final String contentDisposition
+    ) {
         final var object = storageObjectServiceImpl.getObject(id, false).entity();
         final var objectName = object.getName();
 
-        final AtomicReference<String> contentType = new AtomicReference<>(null);
+        var contentTypeSet = false;
+
+        final ServletOutputStream out;
+
+        try {
+            out = response.getOutputStream();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        response.setHeader(
+                HttpHeaders.CONTENT_DISPOSITION,
+                ContentDisposition.builder(
+                                contentDisposition != null
+                                        ? contentDisposition
+                                        : ContentDispositionConstants.DEFAULT_CONTENT_DISPOSITION_TYPE
+                        )
+                        .filename(object.getName())
+                        .build()
+                        .toString()
+        );
 
         try {
             lockService.lock(id);
@@ -138,13 +165,17 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
                         throw new BadRequestException(EncryptionErrorConstants.ENCRYPTION_KEY_NOT_PRESENT_ERROR);
                     }
 
-                    if (contentType.get() == null) {
-                        contentType.set(tika.detect(bytes, objectName));
+                    if (!contentTypeSet) {
+                        response.setHeader(
+                                HttpHeaders.CONTENT_TYPE,
+                                tika.detect(bytes, objectName)
+                        );
                     }
 
                     out.write(bytes);
                 } catch (IOException e) {
-                    throw new RuntimeException(e);
+                    // I don't care.
+                    // throw new RuntimeException(e);
                 }
             });
         } finally {
@@ -164,8 +195,6 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
         );
 
         log.debug("Read raw storage object: {}", object);
-
-        return new RawStorageObjectMetadata(objectName, contentType.get());
     }
 
     @NotNull

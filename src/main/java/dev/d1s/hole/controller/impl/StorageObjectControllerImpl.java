@@ -16,29 +16,23 @@
 
 package dev.d1s.hole.controller.impl;
 
-import dev.d1s.hole.constant.contentDisposition.ContentDispositionConstants;
 import dev.d1s.hole.controller.StorageObjectController;
 import dev.d1s.hole.dto.storageObject.StorageObjectDto;
 import dev.d1s.hole.dto.storageObject.StorageObjectUpdateDto;
-import dev.d1s.hole.entity.storageObject.RawStorageObjectMetadata;
 import dev.d1s.hole.entity.storageObject.StorageObject;
 import dev.d1s.hole.properties.SslConfigurationProperties;
 import dev.d1s.hole.service.StorageObjectService;
 import dev.d1s.security.configuration.annotation.Secured;
 import dev.d1s.teabag.dto.DtoConverter;
 import dev.d1s.teabag.web.ServletUriComponentsBuilderKt;
-import io.undertow.util.Headers;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ContentDisposition;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.util.Objects;
 import java.util.Set;
 
@@ -68,32 +62,7 @@ public class StorageObjectControllerImpl implements StorageObjectController {
             @Nullable final String encryptionKey,
             @NotNull final HttpServletResponse response
     ) {
-        final RawStorageObjectMetadata rawObject;
-
-        try {
-            rawObject = storageObjectService.readRawObject(id, encryptionKey, response.getOutputStream());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        response.setHeader(
-                Headers.CONTENT_TYPE_STRING,
-                rawObject.contentType()
-        );
-
-        response.setHeader(
-                Headers.CONTENT_DISPOSITION_STRING,
-                ContentDisposition.builder(
-                                contentDisposition != null
-                                        ? contentDisposition
-                                        : ContentDispositionConstants.DEFAULT_CONTENT_DISPOSITION_TYPE
-                        )
-                        .filename(rawObject.name())
-                        .build()
-                        .toString()
-        );
-
-        response.setStatus(HttpStatus.OK.value());
+        storageObjectService.writeRawObjectToWeb(id, encryptionKey, response, contentDisposition);
     }
 
     @NotNull

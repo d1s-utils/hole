@@ -71,16 +71,17 @@ public class ObjectStorageAccessorImpl implements ObjectStorageAccessor, Initial
         try {
             return Files.readAllBytes(this.getPath(part.objectId(), part.partId()));
         } catch (IOException e) {
-            throw new StorageObjectAccessException();
+            throw this.createException();
         }
     }
 
+    @NotNull
     @Override
-    public @NotNull OutputStream createOutputStream(@NotNull StorageObject object, int partId) {
+    public OutputStream createOutputStream(@NotNull StorageObject object, int partId) {
         try {
             return Files.newOutputStream(this.getPath(object, partId));
         } catch (IOException e) {
-            throw new StorageObjectAccessException();
+            throw this.createException();
         }
     }
 
@@ -89,7 +90,7 @@ public class ObjectStorageAccessorImpl implements ObjectStorageAccessor, Initial
         try {
             out.write(bytes);
         } catch (IOException e) {
-            throw new StorageObjectAccessException();
+            throw this.createException();
         }
     }
 
@@ -98,7 +99,7 @@ public class ObjectStorageAccessorImpl implements ObjectStorageAccessor, Initial
         try {
             out.close();
         } catch (IOException e) {
-            throw new StorageObjectAccessException();
+            throw this.createException();
         }
     }
 
@@ -108,7 +109,7 @@ public class ObjectStorageAccessorImpl implements ObjectStorageAccessor, Initial
             try {
                 Files.delete(this.getPath(object, p.partId()));
             } catch (IOException e) {
-                throw new StorageObjectAccessException();
+                throw this.createException();
             }
         });
     }
@@ -145,6 +146,13 @@ public class ObjectStorageAccessorImpl implements ObjectStorageAccessor, Initial
 
     private Path getPath(@NotNull final StorageObject object, final int partId) {
         return this.getPath(Objects.requireNonNull(object.getId()), partId);
+    }
+
+    private StorageObjectAccessException createException() {
+        final var exception = new StorageObjectAccessException();
+        exception.printStackTrace();
+
+        return exception;
     }
 
     @Lazy

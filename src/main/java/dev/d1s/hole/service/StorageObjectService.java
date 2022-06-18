@@ -19,13 +19,12 @@ package dev.d1s.hole.service;
 import dev.d1s.hole.dto.common.EntityWithDto;
 import dev.d1s.hole.dto.common.EntityWithDtoSet;
 import dev.d1s.hole.dto.storageObject.StorageObjectDto;
-import dev.d1s.hole.entity.storageObject.RawStorageObjectMetadata;
 import dev.d1s.hole.entity.storageObject.StorageObject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.OutputStream;
+import javax.servlet.http.HttpServletResponse;
 import java.util.Set;
 
 public interface StorageObjectService {
@@ -36,11 +35,11 @@ public interface StorageObjectService {
             final boolean requireDto
     );
 
-    @NotNull
-    RawStorageObjectMetadata readRawObject(
+    void writeRawObjectToWeb(
             @NotNull final String id,
             @Nullable final String encryptionKey,
-            @NotNull final OutputStream out
+            @NotNull final HttpServletResponse response,
+            @Nullable final String contentDisposition
     );
 
     @NotNull
