@@ -28,6 +28,8 @@ public interface ObjectStorageAccessor {
     @NotNull
     Set<StorageObjectPart> findAllAssociatingParts(@NotNull final StorageObject object);
 
+    long getObjectSize(@NotNull final StorageObject object);
+
     byte[] readPartBytes(@NotNull final StorageObjectPart part);
 
     @NotNull

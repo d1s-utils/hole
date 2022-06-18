@@ -65,6 +65,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 @Service
@@ -126,7 +127,7 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
         final var object = storageObjectServiceImpl.getObject(id, false).entity();
         final var objectName = object.getName();
 
-        var contentTypeSet = false;
+        final var contentTypeSet = new AtomicBoolean(false);
 
         final ServletOutputStream out;
 
@@ -148,6 +149,11 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
                         .toString()
         );
 
+        response.setHeader(
+                HttpHeaders.CONTENT_LENGTH,
+                String.valueOf(objectStorageAccessor.getObjectSize(object))
+        );
+
         try {
             lockService.lock(id);
 
@@ -159,23 +165,27 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
 
                     final var encrypted = object.isEncrypted();
 
-                    if (encrypted && encryptionKey != null) {
-                        bytes = encryptionService.decrypt(bytes, encryptionKey);
-                    } else if (encrypted) {
-                        throw new BadRequestException(EncryptionErrorConstants.ENCRYPTION_KEY_NOT_PRESENT_ERROR);
+                    if (encrypted) {
+                        if (encryptionKey != null) {
+                            bytes = encryptionService.decrypt(bytes, encryptionKey);
+                        } else {
+                            throw new BadRequestException(EncryptionErrorConstants.ENCRYPTION_KEY_NOT_PRESENT_ERROR);
+                        }
                     }
 
-                    if (!contentTypeSet) {
+                    if (!contentTypeSet.get()) {
                         response.setHeader(
                                 HttpHeaders.CONTENT_TYPE,
                                 tika.detect(bytes, objectName)
                         );
+
+                        contentTypeSet.set(true);
                     }
 
                     out.write(bytes);
                 } catch (IOException e) {
-                    // I don't care.
-                    // throw new RuntimeException(e);
+                    log.warn("Failed to write part to response: {}. " +
+                            "Perhaps the client disconnected without waiting for the completion.", e.getMessage());
                 }
             });
         } finally {
@@ -200,7 +210,8 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
     @NotNull
     @Override
     @Transactional(readOnly = true)
-    public EntityWithDtoSet<StorageObject, StorageObjectDto> getAllObjects(@Nullable final String group, final boolean requireDto) {
+    public EntityWithDtoSet<StorageObject, StorageObjectDto> getAllObjects(@Nullable final String group,
+                                                                           final boolean requireDto) {
         final Set<StorageObject> objects;
 
         if (group != null) {
@@ -231,7 +242,8 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
     @NotNull
     @Override
     @Transactional
-    public EntityWithDto<StorageObject, StorageObjectDto> createObject(@NotNull final MultipartFile content, @NotNull final String group, @Nullable final String encryptionKey) {
+    public EntityWithDto<StorageObject, StorageObjectDto> createObject(@NotNull final MultipartFile content,
+                                                                       @NotNull final String group, @Nullable final String encryptionKey) {
         final var object = storageObjectRepository.save(
                 new StorageObject(
                         FileNameUtils.sanitizeAndCheck(content.getOriginalFilename()),
@@ -265,7 +277,8 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
 
     @NotNull
     @Override
-    public EntityWithDto<StorageObject, StorageObjectDto> updateObject(@NotNull final String id, @NotNull final StorageObject storageObject) {
+    public EntityWithDto<StorageObject, StorageObjectDto> updateObject(@NotNull final String id,
+                                                                       @NotNull final StorageObject storageObject) {
         final var foundObject = storageObjectServiceImpl.getObject(id, false).entity();
 
         final var propertySet = new HashSet<String>();
@@ -307,7 +320,8 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
 
     @Override
     @Transactional
-    public void overwriteObject(@NotNull final String id, @NotNull final MultipartFile content, @Nullable final String encryptionKey) {
+    public void overwriteObject(@NotNull final String id, @NotNull final MultipartFile content,
+                                @Nullable final String encryptionKey) {
         final var object = storageObjectServiceImpl.getObject(id, false).entity();
 
         final var encryptionUsed = encryptionKey != null;
@@ -397,7 +411,8 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
         }
     }
 
-    private void flushByteArrayBuilder(final ByteArrayBuilder byteArrayBuilder, final String encryptionKey, final OutputStream out) {
+    private void flushByteArrayBuilder(final ByteArrayBuilder byteArrayBuilder, final String encryptionKey,
+                                       final OutputStream out) {
         var bytes = byteArrayBuilder.toByteArray();
 
         if (encryptionKey != null) {
@@ -434,12 +449,14 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
     }
 
     @Autowired
-    public void setStorageObjectDtoConverter(final DtoConverter<StorageObjectDto, StorageObject> storageObjectDtoConverter) {
+    public void setStorageObjectDtoConverter(
+            final DtoConverter<StorageObjectDto, StorageObject> storageObjectDtoConverter) {
         this.storageObjectDtoConverter = storageObjectDtoConverter;
     }
 
     @Autowired
-    public void setStorageObjectAccessDtoConverter(final DtoConverter<StorageObjectAccessDto, StorageObjectAccess> storageObjectAccessDtoConverter) {
+    public void setStorageObjectAccessDtoConverter(
+            final DtoConverter<StorageObjectAccessDto, StorageObjectAccess> storageObjectAccessDtoConverter) {
         this.storageObjectAccessDtoConverter = storageObjectAccessDtoConverter;
     }
 

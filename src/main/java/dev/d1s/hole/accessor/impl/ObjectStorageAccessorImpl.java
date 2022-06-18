@@ -67,6 +67,21 @@ public class ObjectStorageAccessorImpl implements ObjectStorageAccessor, Initial
     }
 
     @Override
+    public long getObjectSize(@NotNull StorageObject object) {
+        var size = 0L;
+
+        for (var part : objectStorageAccessorImpl.findAllAssociatingParts(object)) {
+            try {
+                size += Files.size(part.path());
+            } catch (IOException e) {
+                throw this.createException(e);
+            }
+        }
+
+        return size;
+    }
+
+    @Override
     public byte[] readPartBytes(@NotNull StorageObjectPart part) {
         try {
             return Files.readAllBytes(this.getPath(part.objectId(), part.partId()));
