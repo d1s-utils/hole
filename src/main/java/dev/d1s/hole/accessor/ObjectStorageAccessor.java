@@ -17,25 +17,25 @@
 package dev.d1s.hole.accessor;
 
 import dev.d1s.hole.entity.storageObject.StorageObject;
-import dev.d1s.hole.entity.storageObject.StorageObjectPart;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Set;
 
 public interface ObjectStorageAccessor {
 
     @NotNull
-    Set<StorageObjectPart> findAllAssociatingParts(@NotNull final StorageObject object);
+    InputStream createInputStream(@NotNull final StorageObject object);
 
-    byte[] readPartBytes(@NotNull final StorageObjectPart part);
+    void closeInputStream(@NotNull final InputStream in);
 
     @NotNull
-    OutputStream createOutputStream(@NotNull final StorageObject object, final int partId);
-
-    void writeToOutputStream(@NotNull final OutputStream out, byte[] bytes);
+    OutputStream createOutputStream(@NotNull final StorageObject object);
 
     void closeOutputStream(@NotNull final OutputStream out);
 
     void deleteObject(@NotNull final StorageObject object);
+
+    void processIoException(@NotNull final IOException e);
 }

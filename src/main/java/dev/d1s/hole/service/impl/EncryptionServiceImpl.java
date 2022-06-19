@@ -18,37 +18,41 @@ package dev.d1s.hole.service.impl;
 
 import dev.d1s.hole.exception.encryption.EncryptionException;
 import dev.d1s.hole.service.EncryptionService;
+import org.cryptonode.jncryptor.AES256JNCryptorInputStream;
+import org.cryptonode.jncryptor.AES256JNCryptorOutputStream;
 import org.cryptonode.jncryptor.CryptorException;
-import org.cryptonode.jncryptor.JNCryptor;
 import org.jetbrains.annotations.NotNull;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.io.InputStream;
+import java.io.OutputStream;
 
 @Service
 public class EncryptionServiceImpl implements EncryptionService {
 
-    private JNCryptor jnCryptor;
-
+    @NotNull
     @Override
-    public byte[] encrypt(byte[] bytes, @NotNull String encryptionKey) {
+    public OutputStream createEncryptedOutputStream(@NotNull OutputStream out, @NotNull String encryptionKey) {
         try {
-            return jnCryptor.encryptData(bytes, encryptionKey.toCharArray());
-        } catch (CryptorException e) {
+            return new AES256JNCryptorOutputStream(out, encryptionKey.toCharArray());
+        } catch (final CryptorException e) {
             throw new EncryptionException(e);
         }
     }
 
+    @NotNull
     @Override
-    public byte[] decrypt(byte[] bytes, @NotNull String encryptionKey) {
+    public InputStream createDecryptedInputStream(@NotNull InputStream in, @NotNull String encryptionKey) {
         try {
-            return jnCryptor.decryptData(bytes, encryptionKey.toCharArray());
-        } catch (CryptorException e) {
+            return new AES256JNCryptorInputStream(in, encryptionKey.toCharArray());
+        } catch (final RuntimeException e) {
             throw new EncryptionException(e);
         }
     }
 
-    @Autowired
-    public void setJnCryptor(final JNCryptor jnCryptor) {
-        this.jnCryptor = jnCryptor;
+    @NotNull
+    @Override
+    public EncryptionException createEncryptionException(@NotNull Throwable cause) {
+        return new EncryptionException(cause);
     }
 }

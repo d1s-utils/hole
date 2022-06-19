@@ -16,7 +16,6 @@
 
 package dev.d1s.hole.service.impl;
 
-import com.fasterxml.jackson.core.util.ByteArrayBuilder;
 import dev.d1s.advice.exception.BadRequestException;
 import dev.d1s.advice.exception.NotFoundException;
 import dev.d1s.hole.accessor.ObjectStorageAccessor;
@@ -31,7 +30,6 @@ import dev.d1s.hole.dto.storageObject.StorageObjectAccessDto;
 import dev.d1s.hole.dto.storageObject.StorageObjectDto;
 import dev.d1s.hole.entity.storageObject.StorageObject;
 import dev.d1s.hole.entity.storageObject.StorageObjectAccess;
-import dev.d1s.hole.entity.storageObject.StorageObjectPart;
 import dev.d1s.hole.repository.StorageObjectAccessRepository;
 import dev.d1s.hole.repository.StorageObjectRepository;
 import dev.d1s.hole.service.EncryptionService;
@@ -45,9 +43,12 @@ import dev.d1s.teabag.dto.DtoSetConverterFacade;
 import dev.d1s.teabag.dto.util.DtoConverterExtKt;
 import dev.d1s.teabag.dto.util.DtoSetConverterFacadeExtKt;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tika.Tika;
+import org.apache.tika.utils.StringUtils;
+import org.cryptonode.jncryptor.StreamIntegrityException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.InitializingBean;
@@ -59,11 +60,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.crypto.BadPaddingException;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.io.OutputStream;
+import java.io.InputStream;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -99,7 +102,10 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
     @NotNull
     @Override
     @Transactional(readOnly = true)
-    public EntityWithDto<StorageObject, StorageObjectDto> getObject(@NotNull final String id, final boolean requireDto) {
+    public EntityWithDto<StorageObject, StorageObjectDto> getObject(
+            @NotNull final String id,
+            final boolean requireDto
+    ) {
         final var object = storageObjectRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException(StorageObjectErrorConstants.STORAGE_OBJECT_NOT_FOUND_ERROR));
 
@@ -124,15 +130,17 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
             @Nullable final String contentDisposition
     ) {
         final var object = storageObjectServiceImpl.getObject(id, false).entity();
-        final var objectName = object.getName();
+        final var encrypted = object.isEncrypted();
 
-        var contentTypeSet = false;
+        if (encrypted && StringUtils.isBlank(encryptionKey)) {
+            throw new BadRequestException(EncryptionErrorConstants.ENCRYPTION_KEY_NOT_PRESENT_ERROR);
+        }
 
         final ServletOutputStream out;
 
         try {
             out = response.getOutputStream();
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException(e);
         }
 
@@ -148,37 +156,39 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
                         .toString()
         );
 
+        InputStream in = null;
+
         try {
             lockService.lock(id);
 
-            final var parts = objectStorageAccessor.findAllAssociatingParts(object);
+            in = objectStorageAccessor.createInputStream(object);
 
-            parts.forEach(p -> {
-                try {
-                    var bytes = objectStorageAccessor.readPartBytes(p);
+            if (encrypted) {
+                in = encryptionService.createDecryptedInputStream(in, encryptionKey);
+            }
 
-                    final var encrypted = object.isEncrypted();
+            var contentTypeAndLengthSet = false;
 
-                    if (encrypted && encryptionKey != null) {
-                        bytes = encryptionService.decrypt(bytes, encryptionKey);
-                    } else if (encrypted) {
-                        throw new BadRequestException(EncryptionErrorConstants.ENCRYPTION_KEY_NOT_PRESENT_ERROR);
-                    }
-
-                    if (!contentTypeSet) {
-                        response.setHeader(
-                                HttpHeaders.CONTENT_TYPE,
-                                tika.detect(bytes, objectName)
-                        );
-                    }
-
-                    out.write(bytes);
-                } catch (IOException e) {
-                    // I don't care.
-                    // throw new RuntimeException(e);
+            int read;
+            for (byte[] buffer = new byte[IOUtils.DEFAULT_BUFFER_SIZE]; (read = in.read(buffer, 0, IOUtils.DEFAULT_BUFFER_SIZE)) >= 0; ) {
+                if (!contentTypeAndLengthSet) {
+                    response.setContentType(object.getContentType());
+                    response.setContentLengthLong(object.getContentLength());
                 }
-            });
+
+                out.write(buffer, 0, read);
+            }
+        } catch (final IOException e) {
+            if (e instanceof StreamIntegrityException) {
+                throw encryptionService.createEncryptionException(e);
+            } else if (e.getCause() instanceof BadPaddingException) {
+                throw encryptionService.createEncryptionException(e.getCause());
+            }
+
+            log.warn("Failed to write to response: {}. " +
+                    "Perhaps the client disconnected without waiting for the completion.", e.getMessage());
         } finally {
+            objectStorageAccessor.closeInputStream(Objects.requireNonNull(in));
             lockService.unlock(id);
         }
 
@@ -200,7 +210,10 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
     @NotNull
     @Override
     @Transactional(readOnly = true)
-    public EntityWithDtoSet<StorageObject, StorageObjectDto> getAllObjects(@Nullable final String group, final boolean requireDto) {
+    public EntityWithDtoSet<StorageObject, StorageObjectDto> getAllObjects(
+            @Nullable final String group,
+            final boolean requireDto
+    ) {
         final Set<StorageObject> objects;
 
         if (group != null) {
@@ -231,13 +244,22 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
     @NotNull
     @Override
     @Transactional
-    public EntityWithDto<StorageObject, StorageObjectDto> createObject(@NotNull final MultipartFile content, @NotNull final String group, @Nullable final String encryptionKey) {
-        final var object = storageObjectRepository.save(
+    public EntityWithDto<StorageObject, StorageObjectDto> createObject(
+            @NotNull final MultipartFile content,
+            @NotNull final String group,
+            @Nullable final String encryptionKey
+    ) {
+        final var filename = FileNameUtils.sanitizeAndCheck(content.getOriginalFilename());
+
+        final StorageObject object = storageObjectRepository.save(
                 new StorageObject(
-                        FileNameUtils.sanitizeAndCheck(content.getOriginalFilename()),
+                        filename,
                         group,
-                        encryptionKey != null,
+                        !StringUtils.isBlank(encryptionKey),
                         this.createSha256Digest(content),
+                        this.detectContentType(content, filename),
+                        content.getSize(),
+                        new HashSet<>(),
                         new HashSet<>()
                 )
         );
@@ -265,7 +287,10 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
 
     @NotNull
     @Override
-    public EntityWithDto<StorageObject, StorageObjectDto> updateObject(@NotNull final String id, @NotNull final StorageObject storageObject) {
+    public EntityWithDto<StorageObject, StorageObjectDto> updateObject(
+            @NotNull final String id,
+            @NotNull final StorageObject storageObject
+    ) {
         final var foundObject = storageObjectServiceImpl.getObject(id, false).entity();
 
         final var propertySet = new HashSet<String>();
@@ -307,25 +332,54 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
 
     @Override
     @Transactional
-    public void overwriteObject(@NotNull final String id, @NotNull final MultipartFile content, @Nullable final String encryptionKey) {
+    public void overwriteObject(
+            @NotNull final String id,
+            @NotNull final MultipartFile content,
+            @Nullable final String encryptionKey
+    ) {
         final var object = storageObjectServiceImpl.getObject(id, false).entity();
 
-        final var encryptionUsed = encryptionKey != null;
+        final var encryptionUsed = !StringUtils.isBlank(encryptionKey);
 
         final var digest = this.createSha256Digest(content);
 
         final var sanitizedFileName = FileNameUtils.sanitizeAndCheck(content.getOriginalFilename());
 
+        final var contentType = this.detectContentType(content, sanitizedFileName);
+
+        final var contentLength = content.getSize();
+
         try {
             lockService.lock(object);
 
-            if (encryptionUsed != object.isEncrypted()
-                    || !digest.equals(object.getDigest())
-                    || !sanitizedFileName.equals(object.getName())) {
-                object.setEncrypted(encryptionUsed);
-                object.setDigest(digest);
-                object.setName(sanitizedFileName);
+            var needsUpdate = false;
 
+            if (encryptionUsed != object.isEncrypted()) {
+                object.setEncrypted(encryptionUsed);
+                needsUpdate = true;
+            }
+
+            if (!digest.equals(object.getDigest())) {
+                object.setDigest(digest);
+                needsUpdate = true;
+            }
+
+            if (!sanitizedFileName.equals(object.getName())) {
+                object.setName(sanitizedFileName);
+                needsUpdate = true;
+            }
+
+            if (!contentType.equals(object.getContentType())) {
+                object.setContentType(contentType);
+                needsUpdate = true;
+            }
+
+            if (contentLength != object.getContentLength()) {
+                object.setContentLength(contentLength);
+                needsUpdate = true;
+            }
+
+            if (needsUpdate) {
                 storageObjectRepository.save(object);
             }
 
@@ -370,26 +424,19 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
         log.debug("Deleted storage object: {}", object);
     }
 
-    private void writeObject(final StorageObject object, final String encryptionKey, final MultipartFile content) {
-        var currentPartId = 0;
-        var out = objectStorageAccessor.createOutputStream(object, currentPartId);
+    private void writeObject(
+            final StorageObject object,
+            final String encryptionKey,
+            final MultipartFile content
+    ) {
+        var out = objectStorageAccessor.createOutputStream(object);
 
-        try (final var byteArrayBuilder = new ByteArrayBuilder(); final var in = content.getInputStream()) {
-            while (true) {
-                final var b = in.read();
-
-                if (b == -1) {
-                    this.flushByteArrayBuilder(byteArrayBuilder, encryptionKey, out);
-                    break;
-                }
-
-                byteArrayBuilder.append(b);
-
-                if (byteArrayBuilder.size() == StorageObjectPart.SIZE) {
-                    this.flushByteArrayBuilder(byteArrayBuilder, encryptionKey, out);
-                    out = objectStorageAccessor.createOutputStream(object, ++currentPartId);
-                }
+        try (final var in = content.getInputStream()) {
+            if (!StringUtils.isBlank(encryptionKey)) {
+                out = encryptionService.createEncryptedOutputStream(out, encryptionKey);
             }
+
+            IOUtils.copyLarge(in, out);
         } catch (IOException e) {
             throw new RuntimeException(e);
         } finally {
@@ -397,23 +444,21 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
         }
     }
 
-    private void flushByteArrayBuilder(final ByteArrayBuilder byteArrayBuilder, final String encryptionKey, final OutputStream out) {
-        var bytes = byteArrayBuilder.toByteArray();
-
-        if (encryptionKey != null) {
-            bytes = encryptionService.encrypt(bytes, encryptionKey);
-        }
-
-        objectStorageAccessor.writeToOutputStream(out, bytes);
-        objectStorageAccessor.closeOutputStream(out);
-
-        byteArrayBuilder.reset();
-    }
-
     private String createSha256Digest(final MultipartFile content) {
         try (final var in = content.getInputStream()) {
             return DigestUtils.sha256Hex(in);
+        } catch (final IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private String detectContentType(final MultipartFile content, final String filename) {
+        try {
+            return tika.detect(content.getInputStream(), filename);
         } catch (IOException e) {
+            objectStorageAccessor.processIoException(e);
+
+            // impossible to reach this point
             throw new RuntimeException(e);
         }
     }
@@ -434,12 +479,14 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
     }
 
     @Autowired
-    public void setStorageObjectDtoConverter(final DtoConverter<StorageObjectDto, StorageObject> storageObjectDtoConverter) {
+    public void setStorageObjectDtoConverter(
+            final DtoConverter<StorageObjectDto, StorageObject> storageObjectDtoConverter) {
         this.storageObjectDtoConverter = storageObjectDtoConverter;
     }
 
     @Autowired
-    public void setStorageObjectAccessDtoConverter(final DtoConverter<StorageObjectAccessDto, StorageObjectAccess> storageObjectAccessDtoConverter) {
+    public void setStorageObjectAccessDtoConverter(
+            final DtoConverter<StorageObjectAccessDto, StorageObjectAccess> storageObjectAccessDtoConverter) {
         this.storageObjectAccessDtoConverter = storageObjectAccessDtoConverter;
     }
 

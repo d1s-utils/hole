@@ -25,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.persistence.*;
-import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
@@ -51,6 +50,13 @@ public final class StorageObject extends Identifiable {
     @Column(nullable = false)
     private String digest;
 
+    @Nullable
+    @Column(nullable = false)
+    private String contentType;
+
+    @Column(nullable = false)
+    private long contentLength;
+
     @NotNull
     @OneToMany(mappedBy = "storageObject", cascade = CascadeType.ALL)
     private Set<StorageObjectAccess> storageObjectAccesses;
@@ -64,17 +70,15 @@ public final class StorageObject extends Identifiable {
     )
     private Set<MetadataProperty> metadata;
 
-    public StorageObject(@NotNull final String name, @NotNull final String objectGroup, final boolean encrypted, @Nullable final String digest, @NotNull final Set<MetadataProperty> metadata) {
+    public StorageObject(@NotNull String name, @NotNull String objectGroup, boolean encrypted, @Nullable String digest, @Nullable String contentType, long contentLength, @NotNull Set<StorageObjectAccess> storageObjectAccesses, @NotNull Set<MetadataProperty> metadata) {
         this.name = name;
         this.objectGroup = objectGroup;
         this.encrypted = encrypted;
         this.digest = digest;
+        this.contentType = contentType;
+        this.contentLength = contentLength;
+        this.storageObjectAccesses = storageObjectAccesses;
         this.metadata = metadata;
-        this.storageObjectAccesses = new HashSet<>();
-    }
-
-    public StorageObject(@NotNull final String name, @NotNull final String objectGroup, @NotNull final Set<MetadataProperty> metadata) {
-        this(name, objectGroup, false, null, metadata);
     }
 
     @Override
@@ -101,6 +105,9 @@ public final class StorageObject extends Identifiable {
                 ", objectGroup='" + objectGroup + '\'' +
                 ", encrypted=" + encrypted +
                 ", digest='" + digest + '\'' +
+                ", contentType='" + contentType + '\'' +
+                ", contentLength='" + contentLength + '\'' +
+                ", metadata=" + metadata +
                 '}';
     }
 }

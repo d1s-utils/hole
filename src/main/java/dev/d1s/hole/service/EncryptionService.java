@@ -16,11 +16,20 @@
 
 package dev.d1s.hole.service;
 
+import dev.d1s.hole.exception.encryption.EncryptionException;
 import org.jetbrains.annotations.NotNull;
+
+import java.io.InputStream;
+import java.io.OutputStream;
 
 public interface EncryptionService {
 
-    byte[] encrypt(byte[] bytes, @NotNull final String encryptionKey);
+    @NotNull
+    OutputStream createEncryptedOutputStream(@NotNull OutputStream out, @NotNull String encryptionKey);
 
-    byte[] decrypt(byte[] bytes, @NotNull final String encryptionKey);
+    @NotNull
+    InputStream createDecryptedInputStream(@NotNull InputStream in, @NotNull String encryptionKey);
+
+    @NotNull
+    EncryptionException createEncryptionException(@NotNull final Throwable cause);
 }
