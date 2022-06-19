@@ -42,6 +42,12 @@
             <column name="digest" type="VARCHAR(255)">
                 <constraints nullable="false"/>
             </column>
+            <column name="content_type" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="content_length" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
         </createTable>
 
         <createTable tableName="storage_object_access">

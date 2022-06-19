@@ -18,17 +18,16 @@ package dev.d1s.hole.exception.encryption;
 
 import dev.d1s.advice.entity.ErrorResponseData;
 import dev.d1s.advice.exception.HttpStatusException;
-import org.cryptonode.jncryptor.CryptorException;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.http.HttpStatus;
 
 public final class EncryptionException extends HttpStatusException {
 
-    public EncryptionException(@NotNull final CryptorException cryptorException) {
+    public EncryptionException(@NotNull final Throwable cause) {
         super(
                 new ErrorResponseData(
                         HttpStatus.BAD_REQUEST,
-                        cryptorException.getMessage()
+                        cause.getMessage()
                 )
         );
     }

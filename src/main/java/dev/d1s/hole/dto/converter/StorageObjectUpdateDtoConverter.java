@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.HashSet;
 import java.util.stream.Collectors;
 
 @Component
@@ -44,6 +45,11 @@ public class StorageObjectUpdateDtoConverter implements DtoConverter<StorageObje
         return new StorageObject(
                 storageObjectUpdateDto.name(),
                 storageObjectUpdateDto.group(),
+                false,
+                null,
+                null,
+                0,
+                new HashSet<>(),
                 storageObjectUpdateDto.metadata()
                         .stream()
                         .map(metadataPropertyDtoConverter::convertToEntity)

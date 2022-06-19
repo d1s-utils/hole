@@ -59,7 +59,7 @@ public class LockServiceImpl implements LockService {
             }
 
             log.debug("Locked object {}", id);
-        } catch (InterruptedException e) {
+        } catch (final InterruptedException e) {
             throw new RuntimeException(e);
         }
     }

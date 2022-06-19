@@ -19,92 +19,52 @@ package dev.d1s.hole.accessor.impl;
 import dev.d1s.hole.accessor.ObjectStorageAccessor;
 import dev.d1s.hole.constant.error.StorageErrorConstants;
 import dev.d1s.hole.entity.storageObject.StorageObject;
-import dev.d1s.hole.entity.storageObject.StorageObjectPart;
 import dev.d1s.hole.exception.storage.IllegalStorageRootException;
 import dev.d1s.hole.exception.storage.StorageObjectAccessException;
 import dev.d1s.hole.properties.StorageConfigurationProperties;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashSet;
 import java.util.Objects;
-import java.util.Set;
 
 @Component
 public class ObjectStorageAccessorImpl implements ObjectStorageAccessor, InitializingBean {
 
     private StorageConfigurationProperties properties;
 
-    private ObjectStorageAccessorImpl objectStorageAccessorImpl;
-
     @NotNull
     @Override
-    public Set<StorageObjectPart> findAllAssociatingParts(@NotNull StorageObject object) {
-        final var result = new HashSet<StorageObjectPart>();
-
-        var currentPartId = 0;
-
-        while (true) {
-            final var partPath = this.getPath(object, currentPartId);
-
-            if (Files.exists(partPath)) {
-                result.add(new StorageObjectPart(currentPartId, Objects.requireNonNull(object.getId()), partPath));
-                currentPartId++;
-            } else {
-                break;
-            }
-        }
-
-        return result;
-    }
-
-    @Override
-    public long getObjectSize(@NotNull StorageObject object) {
-        var size = 0L;
-
-        for (var part : objectStorageAccessorImpl.findAllAssociatingParts(object)) {
-            try {
-                size += Files.size(part.path());
-            } catch (IOException e) {
-                throw this.createException(e);
-            }
-        }
-
-        return size;
-    }
-
-    @Override
-    public byte[] readPartBytes(@NotNull StorageObjectPart part) {
+    public InputStream createInputStream(@NotNull StorageObject object) {
         try {
-            return Files.readAllBytes(this.getPath(part.objectId(), part.partId()));
-        } catch (IOException e) {
+            return Files.newInputStream(this.getPath(object));
+        } catch (final IOException e) {
+            throw this.createException(e);
+        }
+    }
+
+    @Override
+    public void closeInputStream(@NotNull InputStream in) {
+        try {
+            in.close();
+        } catch (final IOException e) {
             throw this.createException(e);
         }
     }
 
     @NotNull
     @Override
-    public OutputStream createOutputStream(@NotNull StorageObject object, int partId) {
+    public OutputStream createOutputStream(@NotNull StorageObject object) {
         try {
-            return Files.newOutputStream(this.getPath(object, partId));
-        } catch (IOException e) {
-            throw this.createException(e);
-        }
-    }
-
-    @Override
-    public void writeToOutputStream(@NotNull OutputStream out, byte[] bytes) {
-        try {
-            out.write(bytes);
-        } catch (IOException e) {
+            return Files.newOutputStream(this.getPath(object));
+        } catch (final IOException e) {
             throw this.createException(e);
         }
     }
@@ -113,20 +73,23 @@ public class ObjectStorageAccessorImpl implements ObjectStorageAccessor, Initial
     public void closeOutputStream(@NotNull OutputStream out) {
         try {
             out.close();
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw this.createException(e);
         }
     }
 
     @Override
     public void deleteObject(@NotNull StorageObject object) {
-        objectStorageAccessorImpl.findAllAssociatingParts(object).forEach(p -> {
-            try {
-                Files.delete(this.getPath(object, p.partId()));
-            } catch (IOException e) {
-                throw this.createException(e);
-            }
-        });
+        try {
+            Files.delete(this.getPath(object));
+        } catch (final IOException e) {
+            throw this.createException(e);
+        }
+    }
+
+    @Override
+    public void processIoException(@NotNull IOException e) {
+        throw this.createException(e);
     }
 
     @Override
@@ -155,22 +118,12 @@ public class ObjectStorageAccessorImpl implements ObjectStorageAccessor, Initial
         this.properties = properties;
     }
 
-    private Path getPath(@NotNull final String id, final int partId) {
-        return Paths.get(properties.getRoot(), partId + StorageObjectPart.DELIMITER + id);
-    }
-
-    private Path getPath(@NotNull final StorageObject object, final int partId) {
-        return this.getPath(Objects.requireNonNull(object.getId()), partId);
+    private Path getPath(final StorageObject object) {
+        return Paths.get(properties.getRoot(), Objects.requireNonNull(object.getId()));
     }
 
     private StorageObjectAccessException createException(final IOException e) {
         e.printStackTrace();
         return new StorageObjectAccessException();
-    }
-
-    @Lazy
-    @Autowired
-    public void setObjectStorageAccessorImpl(final ObjectStorageAccessorImpl objectStorageAccessorImpl) {
-        this.objectStorageAccessorImpl = objectStorageAccessorImpl;
     }
 }
