@@ -132,9 +132,15 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
     ) {
         final var object = storageObjectServiceImpl.getObject(id, false).entity();
         final var encrypted = object.isEncrypted();
+        final var contentLength = object.getContentLength();
 
         if (encrypted && StringUtils.isBlank(encryptionKey)) {
             throw new BadRequestException(EncryptionErrorConstants.ENCRYPTION_KEY_NOT_PRESENT_ERROR);
+        }
+
+        if (contentLength == 0) {
+            response.setStatus(HttpStatus.NO_CONTENT.value());
+            return;
         }
 
         final ServletOutputStream out;
@@ -176,13 +182,8 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
                 final var read = in.read(buffer, 0, IOUtils.DEFAULT_BUFFER_SIZE);
 
                 if (!contentTypeAndLengthSet) {
-                    if (read != -1) {
-                        response.setContentType(object.getContentType());
-                        response.setContentLengthLong(object.getContentLength());
-                    } else {
-                        response.setStatus(HttpStatus.NO_CONTENT.value());
-                        break;
-                    }
+                    response.setContentType(object.getContentType());
+                    response.setContentLengthLong(contentLength);
 
                     contentTypeAndLengthSet = true;
                 }
@@ -264,16 +265,23 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
             @NotNull final String group,
             @Nullable final String encryptionKey
     ) {
+        final var encryptionUsed = !StringUtils.isBlank(encryptionKey);
+
         final var filename = FileNameUtils.sanitizeAndCheck(content.getOriginalFilename());
+        final var contentSize = content.getSize();
+
+        if (encryptionUsed && contentSize == 0) {
+            throw new BadRequestException(EncryptionErrorConstants.NOTHING_TO_ENCRYPT_ERROR);
+        }
 
         final StorageObject object = storageObjectRepository.save(
                 new StorageObject(
                         filename,
                         group,
-                        !StringUtils.isBlank(encryptionKey),
+                        encryptionUsed,
                         this.createSha256Digest(content),
                         this.detectContentType(content, filename),
-                        content.getSize(),
+                        contentSize,
                         new HashSet<>(),
                         new HashSet<>()
                 )
