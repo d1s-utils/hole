@@ -56,6 +56,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -169,14 +170,28 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
 
             var contentTypeAndLengthSet = false;
 
-            int read;
-            for (byte[] buffer = new byte[IOUtils.DEFAULT_BUFFER_SIZE]; (read = in.read(buffer, 0, IOUtils.DEFAULT_BUFFER_SIZE)) >= 0; ) {
+            final var buffer = new byte[IOUtils.DEFAULT_BUFFER_SIZE];
+
+            while (true) {
+                final var read = in.read(buffer, 0, IOUtils.DEFAULT_BUFFER_SIZE);
+
                 if (!contentTypeAndLengthSet) {
-                    response.setContentType(object.getContentType());
-                    response.setContentLengthLong(object.getContentLength());
+                    if (read != -1) {
+                        response.setContentType(object.getContentType());
+                        response.setContentLengthLong(object.getContentLength());
+                    } else {
+                        response.setStatus(HttpStatus.NO_CONTENT.value());
+                        break;
+                    }
+
+                    contentTypeAndLengthSet = true;
                 }
 
-                out.write(buffer, 0, read);
+                if (read != -1) {
+                    out.write(buffer, 0, read);
+                } else {
+                    break;
+                }
             }
         } catch (final IOException e) {
             if (e instanceof StreamIntegrityException) {
