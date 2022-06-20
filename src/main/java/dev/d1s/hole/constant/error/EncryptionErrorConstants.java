@@ -20,6 +20,8 @@ public final class EncryptionErrorConstants {
 
     public static final String ENCRYPTION_KEY_NOT_PRESENT_ERROR = "Object is encrypted so encryption key must be present.";
 
+    public static final String NOTHING_TO_ENCRYPT_ERROR = "Nothing to encrypt. Encryption must not be used.";
+
     private EncryptionErrorConstants() {
     }
 }

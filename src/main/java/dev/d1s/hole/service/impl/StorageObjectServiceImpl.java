@@ -56,6 +56,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -131,9 +132,15 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
     ) {
         final var object = storageObjectServiceImpl.getObject(id, false).entity();
         final var encrypted = object.isEncrypted();
+        final var contentLength = object.getContentLength();
 
         if (encrypted && StringUtils.isBlank(encryptionKey)) {
             throw new BadRequestException(EncryptionErrorConstants.ENCRYPTION_KEY_NOT_PRESENT_ERROR);
+        }
+
+        if (contentLength == 0) {
+            response.setStatus(HttpStatus.NO_CONTENT.value());
+            return;
         }
 
         final ServletOutputStream out;
@@ -169,14 +176,23 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
 
             var contentTypeAndLengthSet = false;
 
-            int read;
-            for (byte[] buffer = new byte[IOUtils.DEFAULT_BUFFER_SIZE]; (read = in.read(buffer, 0, IOUtils.DEFAULT_BUFFER_SIZE)) >= 0; ) {
+            final var buffer = new byte[IOUtils.DEFAULT_BUFFER_SIZE];
+
+            while (true) {
+                final var read = in.read(buffer, 0, IOUtils.DEFAULT_BUFFER_SIZE);
+
                 if (!contentTypeAndLengthSet) {
                     response.setContentType(object.getContentType());
-                    response.setContentLengthLong(object.getContentLength());
+                    response.setContentLengthLong(contentLength);
+
+                    contentTypeAndLengthSet = true;
                 }
 
-                out.write(buffer, 0, read);
+                if (read != -1) {
+                    out.write(buffer, 0, read);
+                } else {
+                    break;
+                }
             }
         } catch (final IOException e) {
             if (e instanceof StreamIntegrityException) {
@@ -249,16 +265,23 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
             @NotNull final String group,
             @Nullable final String encryptionKey
     ) {
+        final var encryptionUsed = !StringUtils.isBlank(encryptionKey);
+
         final var filename = FileNameUtils.sanitizeAndCheck(content.getOriginalFilename());
+        final var contentSize = content.getSize();
+
+        if (encryptionUsed && contentSize == 0) {
+            throw new BadRequestException(EncryptionErrorConstants.NOTHING_TO_ENCRYPT_ERROR);
+        }
 
         final StorageObject object = storageObjectRepository.save(
                 new StorageObject(
                         filename,
                         group,
-                        !StringUtils.isBlank(encryptionKey),
+                        encryptionUsed,
                         this.createSha256Digest(content),
                         this.detectContentType(content, filename),
-                        content.getSize(),
+                        contentSize,
                         new HashSet<>(),
                         new HashSet<>()
                 )
