@@ -1,14 +1,30 @@
 ![hole](https://github.com/hole-project/hole/blob/main/img/hole-banner.png?raw=true)
 
-<!-- [![wakatime](https://wakatime.com/badge/user/e4446807-0aa6-4ba9-92ea-2a7632bc44c9/project/9f3d80ae-84f1-4fb4-adcf-d70e553b52ff.svg)](https://wakatime.com/badge/user/e4446807-0aa6-4ba9-92ea-2a7632bc44c9/project/9f3d80ae-84f1-4fb4-adcf-d70e553b52ff) -->
-<!-- [![CodeFactor](https://www.codefactor.io/repository/github/linda-project/linda/badge)](https://www.codefactor.io/repository/github/linda-project/linda) -->
-<!-- [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause) -->
-<!-- [![total-lines](https://img.shields.io/tokei/lines/github/linda-project/linda?color=blue)](https://github.com/linda-project/linda) -->
-<!-- [![Java CI with Gradle](https://github.com/linda-project/linda/actions/workflows/gradle.yml/badge.svg?branch=main)](https://github.com/linda-project/linda/actions/workflows/gradle.yml) -->
-
-<!-- ## [*Documentation is available on https://hole.d1s.dev!*](https://hole.d1s.dev/) -->
+[![wakatime](https://wakatime.com/badge/user/e4446807-0aa6-4ba9-92ea-2a7632bc44c9/project/553f1fbf-9c98-48cb-a230-ce120e1c2192.svg)](https://wakatime.com/badge/user/e4446807-0aa6-4ba9-92ea-2a7632bc44c9/project/553f1fbf-9c98-48cb-a230-ce120e1c2192)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Java CI with Gradle](https://github.com/hole-project/hole/actions/workflows/gradle.yml/badge.svg?branch=main)](https://github.com/hole-project/hole/actions/workflows/gradle.yml)
 
 Simple and extensible storage service implementation with optional encryption.
+
+## About Hole
+
+Hole  is a simple data storage made with a soul for those who want to store
+any data on their own server, easily access it using a convenient API, build
+applications based on Hole and many other things.
+
+Hole wasn't created with enterprise in mind, just because I wanted simplicity.
+Although, you can always supplement the functionality of Hole by interacting
+with its API.
+
+### Main features
+
+- Optional data encryption using [RNCryptor format](https://github.com/RNCryptor/RNCryptor-Spec/blob/master/RNCryptor-Spec-v3.md).
+- Convenient API.
+- Long-polling API.
+- Object of unlimited size.
+- User-defined metadata for each object.
+
+## [*Documentation is available on https://hole.d1s.dev!*](https://hole.d1s.dev/)
 
 ## License
 
