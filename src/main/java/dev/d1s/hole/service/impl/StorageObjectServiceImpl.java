@@ -265,20 +265,16 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
             @NotNull final String group,
             @Nullable final String encryptionKey
     ) {
-        final var encryptionUsed = !StringUtils.isBlank(encryptionKey);
+        this.checkContent(content, encryptionKey);
 
         final var filename = FileNameUtils.sanitizeAndCheck(content.getOriginalFilename());
         final var contentSize = content.getSize();
-
-        if (encryptionUsed && contentSize == 0) {
-            throw new BadRequestException(EncryptionErrorConstants.NOTHING_TO_ENCRYPT_ERROR);
-        }
 
         final StorageObject object = storageObjectRepository.save(
                 new StorageObject(
                         filename,
                         group,
-                        encryptionUsed,
+                        !StringUtils.isBlank(encryptionKey),
                         this.createSha256Digest(content),
                         this.detectContentType(content, filename),
                         contentSize,
@@ -360,6 +356,8 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
             @NotNull final MultipartFile content,
             @Nullable final String encryptionKey
     ) {
+        this.checkContent(content, encryptionKey);
+
         final var object = storageObjectServiceImpl.getObject(id, false).entity();
 
         final var encryptionUsed = !StringUtils.isBlank(encryptionKey);
@@ -483,6 +481,12 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
 
             // impossible to reach this point
             throw new RuntimeException(e);
+        }
+    }
+
+    private void checkContent(final MultipartFile content, final String encryptionKey) {
+        if (content.getSize() == 0 && encryptionKey != null) {
+            throw new BadRequestException(EncryptionErrorConstants.NOTHING_TO_ENCRYPT_ERROR);
         }
     }
 
