@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package dev.d1s.hole.dto.converter;
+package dev.d1s.hole.dto.converter.storageObject;
 
 import dev.d1s.hole.dto.metadata.MetadataPropertyDto;
-import dev.d1s.hole.dto.storageObject.StorageObjectUpdateDto;
+import dev.d1s.hole.dto.storageObject.StorageObjectGroupAlterationDto;
 import dev.d1s.hole.entity.metadata.MetadataProperty;
-import dev.d1s.hole.entity.storageObject.StorageObject;
+import dev.d1s.hole.entity.storageObject.StorageObjectGroup;
 import dev.d1s.teabag.dto.DtoConverter;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,28 +29,23 @@ import java.util.HashSet;
 import java.util.stream.Collectors;
 
 @Component
-public class StorageObjectUpdateDtoConverter implements DtoConverter<StorageObjectUpdateDto, StorageObject> {
+public class StorageObjectGroupAlterationDtoConverter implements DtoConverter<StorageObjectGroupAlterationDto, StorageObjectGroup> {
 
     private DtoConverter<MetadataPropertyDto, MetadataProperty> metadataPropertyDtoConverter;
 
     @NotNull
     @Override
-    public StorageObjectUpdateDto convertToDto(@NotNull StorageObject storageObject) {
+    public StorageObjectGroupAlterationDto convertToDto(@NotNull StorageObjectGroup storageObjectGroup) {
         throw new UnsupportedOperationException();
     }
 
     @NotNull
     @Override
-    public StorageObject convertToEntity(@NotNull StorageObjectUpdateDto storageObjectUpdateDto) {
-        return new StorageObject(
-                storageObjectUpdateDto.name(),
-                storageObjectUpdateDto.group(),
-                false,
-                null,
-                null,
-                0,
+    public StorageObjectGroup convertToEntity(@NotNull StorageObjectGroupAlterationDto storageObjectGroupAlterationDto) {
+        return new StorageObjectGroup(
+                storageObjectGroupAlterationDto.name(),
                 new HashSet<>(),
-                storageObjectUpdateDto.metadata()
+                storageObjectGroupAlterationDto.metadata()
                         .stream()
                         .map(metadataPropertyDtoConverter::convertToEntity)
                         .collect(Collectors.toSet())

@@ -17,6 +17,7 @@
 package dev.d1s.hole.entity.storageObject;
 
 import dev.d1s.hole.entity.common.Identifiable;
+import dev.d1s.hole.entity.common.MetadataAware;
 import dev.d1s.hole.entity.metadata.MetadataProperty;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -33,15 +34,11 @@ import java.util.Set;
 @Entity
 @NoArgsConstructor
 @Table(name = "storage_object")
-public final class StorageObject extends Identifiable {
+public final class StorageObject extends Identifiable implements MetadataAware {
 
     @NotNull
     @Column(nullable = false)
     private String name;
-
-    @NotNull
-    @Column(nullable = false)
-    private String objectGroup;
 
     @Column(nullable = false)
     private boolean encrypted;
@@ -58,6 +55,10 @@ public final class StorageObject extends Identifiable {
     private long contentLength;
 
     @NotNull
+    @ManyToOne(cascade = CascadeType.MERGE)
+    private StorageObjectGroup group;
+
+    @NotNull
     @OneToMany(mappedBy = "storageObject", cascade = CascadeType.ALL)
     private Set<StorageObjectAccess> storageObjectAccesses;
 
@@ -70,9 +71,18 @@ public final class StorageObject extends Identifiable {
     )
     private Set<MetadataProperty> metadata;
 
-    public StorageObject(@NotNull String name, @NotNull String objectGroup, boolean encrypted, @Nullable String digest, @Nullable String contentType, long contentLength, @NotNull Set<StorageObjectAccess> storageObjectAccesses, @NotNull Set<MetadataProperty> metadata) {
+    public StorageObject(
+            final @NotNull String name,
+            final @NotNull StorageObjectGroup group,
+            final boolean encrypted,
+            @Nullable final String digest,
+            @Nullable final String contentType,
+            final long contentLength,
+            @NotNull final Set<StorageObjectAccess> storageObjectAccesses,
+            @NotNull final Set<MetadataProperty> metadata
+    ) {
         this.name = name;
-        this.objectGroup = objectGroup;
+        this.group = group;
         this.encrypted = encrypted;
         this.digest = digest;
         this.contentType = contentType;
@@ -89,20 +99,20 @@ public final class StorageObject extends Identifiable {
         return Objects.equals(this.getId(), that.getId())
                 && Objects.equals(this.getCreationTime(), that.getCreationTime())
                 && this.name.equals(that.name)
-                && this.objectGroup.equals(that.objectGroup)
+                && this.group.equals(that.group)
                 && this.encrypted == that.encrypted;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(this.getId(), this.getCreationTime(), this.name, this.objectGroup, this.encrypted);
+        return Objects.hash(this.getId(), this.getCreationTime(), this.name, this.group, this.encrypted);
     }
 
     @Override
     public String toString() {
         return "StorageObject{" +
                 "name='" + name + '\'' +
-                ", objectGroup='" + objectGroup + '\'' +
+                ", group='" + group.getId() + '\'' +
                 ", encrypted=" + encrypted +
                 ", digest='" + digest + '\'' +
                 ", contentType='" + contentType + '\'' +

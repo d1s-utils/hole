@@ -16,10 +16,14 @@
 
 package dev.d1s.hole.repository;
 
-import dev.d1s.hole.entity.storageObject.StorageObject;
+import dev.d1s.hole.entity.storageObject.StorageObjectGroup;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
-public interface StorageObjectRepository extends JpaRepository<StorageObject, String> {
+public interface StorageObjectGroupRepository extends JpaRepository<StorageObjectGroup, String> {
+
+    Optional<StorageObjectGroup> findByName(final String name);
 }

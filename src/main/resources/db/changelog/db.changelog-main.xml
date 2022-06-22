@@ -33,7 +33,7 @@
             <column name="name" type="VARCHAR(255)">
                 <constraints nullable="false"/>
             </column>
-            <column name="object_group" type="VARCHAR(255)">
+            <column name="group_id" type="VARCHAR(255)">
                 <constraints nullable="false"/>
             </column>
             <column name="encrypted" type="bool">
@@ -62,6 +62,18 @@
             </column>
         </createTable>
 
+        <createTable tableName="storage_object_group">
+            <column name="id" type="VARCHAR(255)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="pk_storage_object_group"/>
+            </column>
+            <column name="creation_time" type="DATETIME">
+                <constraints nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+        </createTable>
+
         <createTable tableName="metadata_property">
             <column name="id" type="VARCHAR(255)">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="pk_metadata_property"/>
@@ -87,9 +99,25 @@
             </column>
         </createTable>
 
+        <createTable tableName="storage_object_group_metadata">
+            <column name="storage_object_group_id" type="VARCHAR(255)">
+                <constraints nullable="false" primaryKey="true"
+                             primaryKeyName="pk_storage_object_group_metadata_storage_object_group"/>
+            </column>
+            <column name="metadata_property_id" type="VARCHAR(255)">
+                <constraints nullable="false" primaryKey="true"
+                             primaryKeyName="pk_storage_object_group_metadata_metadata"/>
+            </column>
+        </createTable>
+
         <addForeignKeyConstraint baseTableName="storage_object_access" baseColumnNames="storage_object_id"
                                  constraintName="fr_storage_object_access_on_storage_object"
                                  referencedTableName="storage_object"
+                                 referencedColumnNames="id"/>
+
+        <addForeignKeyConstraint baseTableName="storage_object" baseColumnNames="group_id"
+                                 constraintName="fr_storage_object_on_storage_object_group"
+                                 referencedTableName="storage_object_group"
                                  referencedColumnNames="id"/>
 
         <addForeignKeyConstraint baseTableName="storage_object_metadata" baseColumnNames="storage_object_id"
@@ -99,6 +127,16 @@
 
         <addForeignKeyConstraint baseTableName="storage_object_metadata" baseColumnNames="metadata_property_id"
                                  constraintName="fr_storage_object_metadata_on_metadata_property"
+                                 referencedTableName="metadata_property"
+                                 referencedColumnNames="id"/>
+
+        <addForeignKeyConstraint baseTableName="storage_object_group_metadata" baseColumnNames="storage_object_group_id"
+                                 constraintName="fr_storage_object_group_metadata_on_storage_object_group"
+                                 referencedTableName="storage_object_group"
+                                 referencedColumnNames="id"/>
+
+        <addForeignKeyConstraint baseTableName="storage_object_group_metadata" baseColumnNames="metadata_property_id"
+                                 constraintName="fr_storage_object_group_metadata_on_metadata_property"
                                  referencedTableName="metadata_property"
                                  referencedColumnNames="id"/>
     </changeSet>

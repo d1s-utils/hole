@@ -14,12 +14,16 @@
  * limitations under the License.
  */
 
-package dev.d1s.hole.repository;
+package dev.d1s.hole.constant.longPolling;
 
-import dev.d1s.hole.entity.storageObject.StorageObject;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+public final class StorageObjectGroupLongPollingConstants {
 
-@Repository
-public interface StorageObjectRepository extends JpaRepository<StorageObject, String> {
+    public static final String GROUP_CREATED = "storage-object-group-created";
+
+    public static final String GROUP_UPDATED = "storage-object-group-updated";
+
+    public static final String GROUP_DELETED = "storage-object-group-deleted";
+
+    private StorageObjectGroupLongPollingConstants() {
+    }
 }

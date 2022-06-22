@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
-package dev.d1s.hole.repository;
+package dev.d1s.hole.factory;
 
-import dev.d1s.hole.entity.storageObject.StorageObject;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+import org.jetbrains.annotations.NotNull;
 
-@Repository
-public interface StorageObjectRepository extends JpaRepository<StorageObject, String> {
+import java.net.URI;
+
+public interface LocationFactory {
+
+    @NotNull
+    URI createLocation(@NotNull String identifier);
 }

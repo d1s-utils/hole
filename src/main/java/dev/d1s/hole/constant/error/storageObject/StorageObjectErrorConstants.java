@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dev.d1s.hole.constant.error;
+package dev.d1s.hole.constant.error.storageObject;
 
 public final class StorageObjectErrorConstants {
 

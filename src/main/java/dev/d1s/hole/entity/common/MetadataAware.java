@@ -14,12 +14,18 @@
  * limitations under the License.
  */
 
-package dev.d1s.hole.repository;
+package dev.d1s.hole.entity.common;
 
-import dev.d1s.hole.entity.storageObject.StorageObject;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+import dev.d1s.hole.entity.metadata.MetadataProperty;
+import org.jetbrains.annotations.NotNull;
 
-@Repository
-public interface StorageObjectRepository extends JpaRepository<StorageObject, String> {
+import java.util.Set;
+
+// usually implemented by lombok's @Getter
+public interface MetadataAware {
+
+    @NotNull
+    Set<MetadataProperty> getMetadata();
+
+    void setMetadata(@NotNull final Set<MetadataProperty> metadata);
 }

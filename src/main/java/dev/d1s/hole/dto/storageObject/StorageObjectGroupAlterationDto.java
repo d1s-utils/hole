@@ -14,12 +14,23 @@
  * limitations under the License.
  */
 
-package dev.d1s.hole.repository;
+package dev.d1s.hole.dto.storageObject;
 
-import dev.d1s.hole.entity.storageObject.StorageObject;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+import dev.d1s.hole.constant.regex.RegexConstants;
+import dev.d1s.hole.dto.metadata.MetadataPropertyDto;
+import org.jetbrains.annotations.NotNull;
 
-@Repository
-public interface StorageObjectRepository extends JpaRepository<StorageObject, String> {
+import javax.validation.constraints.Pattern;
+import java.util.Set;
+
+public record StorageObjectGroupAlterationDto(
+
+        @NotNull
+        @Pattern(regexp = RegexConstants.COMMON_NAME_REGEX)
+        String name,
+
+        @NotNull
+        @javax.validation.constraints.NotNull
+        Set<MetadataPropertyDto> metadata
+) {
 }
