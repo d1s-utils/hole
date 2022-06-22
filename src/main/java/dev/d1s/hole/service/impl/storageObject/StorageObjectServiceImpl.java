@@ -109,7 +109,7 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
             final boolean requireDto
     ) {
         final var object = storageObjectRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException(StorageObjectErrorConstants.STORAGE_OBJECT_NOT_FOUND_ERROR));
+                .orElseThrow(() -> new NotFoundException(StorageObjectErrorConstants.STORAGE_OBJECT_NOT_FOUND_ERROR.formatted(id)));
 
         log.debug("Found storage object: {}", object);
 

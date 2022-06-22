@@ -28,7 +28,7 @@ public final class FileNameUtils {
     @NotNull
     public static String sanitizeAndCheck(final String fileName) {
         if (fileName == null) {
-            throw new BadRequestException(StorageObjectErrorConstants.FILE_NAME_NOT_RPESENT_ERROR);
+            throw new BadRequestException(StorageObjectErrorConstants.FILE_NAME_NOT_PRESENT_ERROR);
         }
 
         return FilenameUtil.normalize(
