@@ -21,6 +21,9 @@ public final class StorageObjectGroupErrorConstants {
     public static final String STORAGE_OBJECT_GROUP_NOT_FOUND_ERROR =
             "Object group was not found by the provided identifier (%s).";
 
+    public static final String STORAGE_OBJECT_GROUP_NAME_ALREADY_EXISTS_ERROR =
+            "Object group with the provided name (%s) already exists.";
+
     private StorageObjectGroupErrorConstants() {
     }
 }

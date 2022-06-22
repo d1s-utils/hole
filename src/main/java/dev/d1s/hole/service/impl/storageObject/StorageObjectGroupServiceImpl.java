@@ -17,6 +17,7 @@
 package dev.d1s.hole.service.impl.storageObject;
 
 import dev.d1s.advice.exception.NotFoundException;
+import dev.d1s.advice.exception.UnprocessableEntityException;
 import dev.d1s.hole.constant.error.storageObject.StorageObjectGroupErrorConstants;
 import dev.d1s.hole.constant.longPolling.StorageObjectGroupLongPollingConstants;
 import dev.d1s.hole.dto.common.EntityWithDto;
@@ -92,6 +93,10 @@ public class StorageObjectGroupServiceImpl implements StorageObjectGroupService,
     @Override
     public EntityWithDto<StorageObjectGroup, StorageObjectGroupDto> createGroup(@NotNull final StorageObjectGroup group) {
         metadataService.checkMetadata(group);
+
+        if (storageObjectGroupRepository.findByName(group.getName()).isPresent()) {
+            throw new UnprocessableEntityException(StorageObjectGroupErrorConstants.STORAGE_OBJECT_GROUP_NAME_ALREADY_EXISTS_ERROR);
+        }
 
         final var savedGroup = storageObjectGroupRepository.save(group);
 
