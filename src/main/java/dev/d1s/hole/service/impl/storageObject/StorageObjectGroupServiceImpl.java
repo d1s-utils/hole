@@ -98,7 +98,7 @@ public class StorageObjectGroupServiceImpl implements StorageObjectGroupService,
         final var groupDto = storageObjectGroupDtoConverter.convertToDto(savedGroup);
 
         publisher.publish(
-                StorageObjectGroupLongPollingConstants.GROUP_CREATED,
+                StorageObjectGroupLongPollingConstants.OBJECT_GROUP_CREATED,
                 savedGroup.getId(),
                 groupDto
         );
@@ -124,7 +124,7 @@ public class StorageObjectGroupServiceImpl implements StorageObjectGroupService,
         final var groupDto = storageObjectGroupDtoConverter.convertToDto(savedGroup);
 
         publisher.publish(
-                StorageObjectGroupLongPollingConstants.GROUP_UPDATED,
+                StorageObjectGroupLongPollingConstants.OBJECT_GROUP_UPDATED,
                 savedGroup.getId(),
                 groupDto
         );
@@ -142,7 +142,7 @@ public class StorageObjectGroupServiceImpl implements StorageObjectGroupService,
         storageObjectGroupRepository.delete(entity);
 
         publisher.publish(
-                StorageObjectGroupLongPollingConstants.GROUP_DELETED,
+                StorageObjectGroupLongPollingConstants.OBJECT_GROUP_DELETED,
                 entity.getId(),
                 group.dto()
         );

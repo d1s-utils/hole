@@ -16,6 +16,7 @@
 
 package dev.d1s.hole.configuration;
 
+import dev.d1s.hole.constant.longPolling.StorageObjectGroupLongPollingConstants;
 import dev.d1s.hole.constant.longPolling.StorageObjectLongPollingConstants;
 import dev.d1s.lp.server.configurer.LongPollingServerConfigurer;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +35,11 @@ public class LongPollingServerConfiguration implements LongPollingServerConfigur
                 StorageObjectLongPollingConstants.STORAGE_OBJECT_CREATED_GROUP,
                 StorageObjectLongPollingConstants.STORAGE_OBJECT_UPDATED_GROUP,
                 StorageObjectLongPollingConstants.STORAGE_OBJECT_OVERWRITTEN_GROUP,
-                StorageObjectLongPollingConstants.STORAGE_OBJECT_DELETED_GROUP
+                StorageObjectLongPollingConstants.STORAGE_OBJECT_DELETED_GROUP,
+
+                StorageObjectGroupLongPollingConstants.OBJECT_GROUP_CREATED,
+                StorageObjectGroupLongPollingConstants.OBJECT_GROUP_UPDATED,
+                StorageObjectGroupLongPollingConstants.OBJECT_GROUP_DELETED
         );
     }
 }

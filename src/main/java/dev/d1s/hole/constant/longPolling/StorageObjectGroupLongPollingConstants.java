@@ -18,11 +18,11 @@ package dev.d1s.hole.constant.longPolling;
 
 public final class StorageObjectGroupLongPollingConstants {
 
-    public static final String GROUP_CREATED = "storage-object-group-created";
+    public static final String OBJECT_GROUP_CREATED = "storage-object-group-created";
 
-    public static final String GROUP_UPDATED = "storage-object-group-updated";
+    public static final String OBJECT_GROUP_UPDATED = "storage-object-group-updated";
 
-    public static final String GROUP_DELETED = "storage-object-group-deleted";
+    public static final String OBJECT_GROUP_DELETED = "storage-object-group-deleted";
 
     private StorageObjectGroupLongPollingConstants() {
     }
