@@ -39,6 +39,7 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
 
@@ -61,7 +62,7 @@ public class StorageObjectGroupServiceImpl implements StorageObjectGroupService,
 
     @NotNull
     @Override
-
+    @Transactional(readOnly = true)
     public EntityWithDto<StorageObjectGroup, StorageObjectGroupDto> getGroup(@NotNull final String id, final boolean requireDto) {
         final var group = storageObjectGroupRepository.findById(id)
                 .orElseGet(() -> storageObjectGroupRepository.findByName(id)
@@ -78,6 +79,7 @@ public class StorageObjectGroupServiceImpl implements StorageObjectGroupService,
 
     @NotNull
     @Override
+    @Transactional(readOnly = true)
     public EntityWithDtoSet<StorageObjectGroup, StorageObjectGroupDto> getAllGroups(final boolean requireDto) {
         final var groups = new HashSet<>(storageObjectGroupRepository.findAll());
 
@@ -91,6 +93,7 @@ public class StorageObjectGroupServiceImpl implements StorageObjectGroupService,
 
     @NotNull
     @Override
+    @Transactional
     public EntityWithDto<StorageObjectGroup, StorageObjectGroupDto> createGroup(@NotNull final StorageObjectGroup group) {
         metadataService.checkMetadata(group);
 
@@ -115,6 +118,7 @@ public class StorageObjectGroupServiceImpl implements StorageObjectGroupService,
 
     @NotNull
     @Override
+    @Transactional
     public EntityWithDto<StorageObjectGroup, StorageObjectGroupDto> updateGroup(@NotNull final String id, @NotNull final StorageObjectGroup group) {
         final var foundGroup = storageObjectGroupServiceImpl.getGroup(id, false).entity();
 
@@ -140,6 +144,7 @@ public class StorageObjectGroupServiceImpl implements StorageObjectGroupService,
     }
 
     @Override
+    @Transactional
     public void deleteGroup(@NotNull final String id) {
         final var group = storageObjectGroupServiceImpl.getGroup(id, true);
         final var entity = group.entity();
