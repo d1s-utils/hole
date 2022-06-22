@@ -19,7 +19,7 @@ package dev.d1s.hole.constant.error.storageObject;
 public final class StorageObjectGroupErrorConstants {
 
     public static final String STORAGE_OBJECT_GROUP_NOT_FOUND_ERROR =
-            "Object group was not found by the provided identifier.";
+            "Object group was not found by the provided identifier (%s).";
 
     private StorageObjectGroupErrorConstants() {
     }

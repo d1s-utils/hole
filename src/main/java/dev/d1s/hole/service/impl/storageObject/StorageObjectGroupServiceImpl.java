@@ -64,7 +64,7 @@ public class StorageObjectGroupServiceImpl implements StorageObjectGroupService,
     public EntityWithDto<StorageObjectGroup, StorageObjectGroupDto> getGroup(@NotNull final String id, final boolean requireDto) {
         final var group = storageObjectGroupRepository.findById(id)
                 .orElseGet(() -> storageObjectGroupRepository.findByName(id)
-                        .orElseThrow(() -> new NotFoundException(StorageObjectGroupErrorConstants.STORAGE_OBJECT_GROUP_NOT_FOUND_ERROR))
+                        .orElseThrow(() -> new NotFoundException(StorageObjectGroupErrorConstants.STORAGE_OBJECT_GROUP_NOT_FOUND_ERROR.formatted(id)))
                 );
 
         log.debug("Found object group: {}", group);
