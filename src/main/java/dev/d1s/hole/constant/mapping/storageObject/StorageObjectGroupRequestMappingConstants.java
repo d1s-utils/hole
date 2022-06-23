@@ -31,6 +31,9 @@ public final class StorageObjectGroupRequestMappingConstants {
     public static final String GET_ALL_GROUPS_MAPPING =
             StorageObjectGroupRequestMappingConstants.GROUP_BASE_MAPPING;
 
+    public static final String GET_ALL_GROUP_NAMES_MAPPING =
+            StorageObjectGroupRequestMappingConstants.GROUP_BASE_MAPPING + "/names";
+
     public static final String POST_GROUP_MAPPING =
             StorageObjectGroupRequestMappingConstants.GROUP_BASE_MAPPING;
 

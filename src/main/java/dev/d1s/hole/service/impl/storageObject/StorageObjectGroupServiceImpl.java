@@ -42,6 +42,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
+import java.util.Set;
 
 @Service
 public class StorageObjectGroupServiceImpl implements StorageObjectGroupService, InitializingBean {
@@ -89,6 +90,13 @@ public class StorageObjectGroupServiceImpl implements StorageObjectGroupService,
                 groups,
                 DtoSetConverterFacadeExtKt.convertToDtoSetIf(storageObjectGroupDtoSetConverter, groups, requireDto)
         );
+    }
+
+    @NotNull
+    @Override
+    @Transactional
+    public Set<String> getAllGroupNames() {
+        return storageObjectGroupRepository.findAllNames();
     }
 
     @NotNull

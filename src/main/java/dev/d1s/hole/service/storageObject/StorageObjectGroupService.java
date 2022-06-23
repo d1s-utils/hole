@@ -22,6 +22,8 @@ import dev.d1s.hole.dto.storageObject.StorageObjectGroupDto;
 import dev.d1s.hole.entity.storageObject.StorageObjectGroup;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Set;
+
 public interface StorageObjectGroupService {
 
     @NotNull
@@ -32,6 +34,9 @@ public interface StorageObjectGroupService {
 
     @NotNull
     EntityWithDtoSet<StorageObjectGroup, StorageObjectGroupDto> getAllGroups(final boolean requireDto);
+
+    @NotNull
+    Set<String> getAllGroupNames();
 
     @NotNull
     EntityWithDto<StorageObjectGroup, StorageObjectGroupDto> createGroup(
