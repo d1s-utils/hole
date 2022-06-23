@@ -18,12 +18,17 @@ package dev.d1s.hole.repository;
 
 import dev.d1s.hole.entity.storageObject.StorageObjectGroup;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
+import java.util.Set;
 
 @Repository
 public interface StorageObjectGroupRepository extends JpaRepository<StorageObjectGroup, String> {
 
     Optional<StorageObjectGroup> findByName(final String name);
+
+    @Query("select g.name from StorageObjectGroup g")
+    Set<String> findAllNames();
 }

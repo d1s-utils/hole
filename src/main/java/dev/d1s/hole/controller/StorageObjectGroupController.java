@@ -31,6 +31,7 @@ import java.util.Set;
 @Validated
 public interface StorageObjectGroupController {
 
+    @NotNull
     @GetMapping(StorageObjectGroupRequestMappingConstants.GET_GROUP_MAPPING)
     ResponseEntity<StorageObjectGroupDto> getGroup(
             @NotNull
@@ -38,9 +39,15 @@ public interface StorageObjectGroupController {
             @NotBlank final String id
     );
 
+    @NotNull
     @GetMapping(StorageObjectGroupRequestMappingConstants.GET_ALL_GROUPS_MAPPING)
     ResponseEntity<Set<StorageObjectGroupDto>> getAllGroups();
 
+    @NotNull
+    @GetMapping(StorageObjectGroupRequestMappingConstants.GET_ALL_GROUP_NAMES_MAPPING)
+    ResponseEntity<Set<String>> getAllGroupNames();
+
+    @NotNull
     @PostMapping(StorageObjectGroupRequestMappingConstants.POST_GROUP_MAPPING)
     ResponseEntity<StorageObjectGroupDto> postGroup(
             @NotNull
@@ -48,6 +55,7 @@ public interface StorageObjectGroupController {
             @Valid final StorageObjectGroupAlterationDto alteration
     );
 
+    @NotNull
     @PutMapping(StorageObjectGroupRequestMappingConstants.PUT_GROUP_MAPPING)
     ResponseEntity<StorageObjectGroupDto> putGroup(
             @NotNull
@@ -58,6 +66,7 @@ public interface StorageObjectGroupController {
             @Valid final StorageObjectGroupAlterationDto alteration
     );
 
+    @NotNull
     @DeleteMapping(StorageObjectGroupRequestMappingConstants.DELETE_GROUP_MAPPING)
     ResponseEntity<?> deleteGroup(
             @NotNull
