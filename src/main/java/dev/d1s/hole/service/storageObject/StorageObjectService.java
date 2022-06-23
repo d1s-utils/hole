@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dev.d1s.hole.service;
+package dev.d1s.hole.service.storageObject;
 
 import dev.d1s.hole.dto.common.EntityWithDto;
 import dev.d1s.hole.dto.common.EntityWithDtoSet;
@@ -25,7 +25,6 @@ import org.jetbrains.annotations.Nullable;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
-import java.util.Set;
 
 public interface StorageObjectService {
 
@@ -43,13 +42,7 @@ public interface StorageObjectService {
     );
 
     @NotNull
-    EntityWithDtoSet<StorageObject, StorageObjectDto> getAllObjects(
-            @Nullable final String group,
-            final boolean requireDto
-    );
-
-    @NotNull
-    Set<String> getAvailableGroups();
+    EntityWithDtoSet<StorageObject, StorageObjectDto> getAllObjects(final boolean requireDto);
 
     @NotNull
     EntityWithDto<StorageObject, StorageObjectDto> createObject(

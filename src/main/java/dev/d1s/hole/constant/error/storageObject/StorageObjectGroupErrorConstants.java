@@ -14,12 +14,16 @@
  * limitations under the License.
  */
 
-package dev.d1s.hole.repository;
+package dev.d1s.hole.constant.error.storageObject;
 
-import dev.d1s.hole.entity.storageObject.StorageObject;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+public final class StorageObjectGroupErrorConstants {
 
-@Repository
-public interface StorageObjectRepository extends JpaRepository<StorageObject, String> {
+    public static final String STORAGE_OBJECT_GROUP_NOT_FOUND_ERROR =
+            "Object group was not found by the provided identifier (%s).";
+
+    public static final String STORAGE_OBJECT_GROUP_NAME_ALREADY_EXISTS_ERROR =
+            "Object group with the provided name (%s) already exists.";
+
+    private StorageObjectGroupErrorConstants() {
+    }
 }

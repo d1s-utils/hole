@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package dev.d1s.hole.dto.converter;
+package dev.d1s.hole.dto.converter.storageObject;
 
 import dev.d1s.hole.dto.metadata.MetadataPropertyDto;
-import dev.d1s.hole.dto.storageObject.StorageObjectAccessDto;
 import dev.d1s.hole.dto.storageObject.StorageObjectDto;
+import dev.d1s.hole.dto.storageObject.StorageObjectGroupDto;
 import dev.d1s.hole.entity.metadata.MetadataProperty;
 import dev.d1s.hole.entity.storageObject.StorageObject;
-import dev.d1s.hole.entity.storageObject.StorageObjectAccess;
+import dev.d1s.hole.entity.storageObject.StorageObjectGroup;
 import dev.d1s.teabag.dto.DtoConverter;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,27 +31,24 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Component
-public class StorageObjectDtoConverter implements DtoConverter<StorageObjectDto, StorageObject> {
+public class StorageObjectGroupDtoConverter implements DtoConverter<StorageObjectGroupDto, StorageObjectGroup> {
 
-    private DtoConverter<StorageObjectAccessDto, StorageObjectAccess> storageObjectAccessDtoConverter;
+    private DtoConverter<StorageObjectDto, StorageObject> storageObjectDtoConverter;
 
     private DtoConverter<MetadataPropertyDto, MetadataProperty> metadataPropertyDtoConverter;
 
     @NotNull
     @Override
-    public StorageObjectDto convertToDto(@NotNull final StorageObject storageObject) {
-        return new StorageObjectDto(
-                Objects.requireNonNull(storageObject.getId()),
-                Objects.requireNonNull(storageObject.getCreationTime()),
-                storageObject.getName(),
-                storageObject.getObjectGroup(),
-                storageObject.isEncrypted(),
-                Objects.requireNonNull(storageObject.getDigest()),
-                storageObject.getStorageObjectAccesses()
+    public StorageObjectGroupDto convertToDto(@NotNull StorageObjectGroup storageObjectGroup) {
+        return new StorageObjectGroupDto(
+                Objects.requireNonNull(storageObjectGroup.getId()),
+                Objects.requireNonNull(storageObjectGroup.getCreationTime()),
+                storageObjectGroup.getName(),
+                storageObjectGroup.getStorageObjects()
                         .stream()
-                        .map(storageObjectAccessDtoConverter::convertToDto)
+                        .map(storageObjectDtoConverter::convertToDto)
                         .collect(Collectors.toSet()),
-                storageObject.getMetadata()
+                storageObjectGroup.getMetadata()
                         .stream()
                         .map(metadataPropertyDtoConverter::convertToDto)
                         .collect(Collectors.toSet())
@@ -60,13 +57,13 @@ public class StorageObjectDtoConverter implements DtoConverter<StorageObjectDto,
 
     @NotNull
     @Override
-    public StorageObject convertToEntity(@NotNull final StorageObjectDto storageObjectDto) {
+    public StorageObjectGroup convertToEntity(@NotNull StorageObjectGroupDto storageObjectGroupDto) {
         throw new UnsupportedOperationException();
     }
 
     @Autowired
-    public void setStorageObjectAccessDtoConverter(final DtoConverter<StorageObjectAccessDto, StorageObjectAccess> storageObjectAccessDtoConverter) {
-        this.storageObjectAccessDtoConverter = storageObjectAccessDtoConverter;
+    public void setStorageObjectDtoConverter(final DtoConverter<StorageObjectDto, StorageObject> storageObjectDtoConverter) {
+        this.storageObjectDtoConverter = storageObjectDtoConverter;
     }
 
     @Autowired

@@ -18,7 +18,7 @@ package dev.d1s.hole.exception.storage;
 
 import dev.d1s.advice.entity.ErrorResponseData;
 import dev.d1s.advice.exception.HttpStatusException;
-import dev.d1s.hole.constant.error.StorageObjectErrorConstants;
+import dev.d1s.hole.constant.error.storageObject.StorageObjectErrorConstants;
 import org.springframework.http.HttpStatus;
 
 public final class StorageObjectAccessException extends HttpStatusException {

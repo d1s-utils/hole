@@ -14,20 +14,19 @@
  * limitations under the License.
  */
 
-package dev.d1s.hole.constant.error;
+package dev.d1s.hole.constant.error.storageObject;
 
 public final class StorageObjectErrorConstants {
 
     public static final String STORAGE_OBJECT_NOT_FOUND_ERROR =
-            "Storage object was not found.";
-
+            "Storage object was not found by the provided identifier (%s).";
     public static final String STORAGE_OBJECT_ACCESS_ERROR =
             "Could not perform the I/O operation on the internal storage.";
 
     public static final String STORAGE_OBJECT_LOCKED_ERROR =
-            "Storage object is locked. Please try again later.";
+            "Storage object (%s) is locked. Please try again later.";
 
-    public static final String FILE_NAME_NOT_RPESENT_ERROR =
+    public static final String FILE_NAME_NOT_PRESENT_ERROR =
             "File name must be present within the request.";
 
     private StorageObjectErrorConstants() {

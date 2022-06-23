@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dev.d1s.hole.dto.converter;
+package dev.d1s.hole.dto.converter.storageObject;
 
 import dev.d1s.hole.dto.storageObject.StorageObjectAccessDto;
 import dev.d1s.hole.entity.storageObject.StorageObjectAccess;

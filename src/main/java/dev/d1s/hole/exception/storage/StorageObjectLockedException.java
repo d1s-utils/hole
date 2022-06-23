@@ -18,16 +18,17 @@ package dev.d1s.hole.exception.storage;
 
 import dev.d1s.advice.entity.ErrorResponseData;
 import dev.d1s.advice.exception.HttpStatusException;
-import dev.d1s.hole.constant.error.StorageObjectErrorConstants;
+import dev.d1s.hole.constant.error.storageObject.StorageObjectErrorConstants;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.http.HttpStatus;
 
 public final class StorageObjectLockedException extends HttpStatusException {
 
-    public StorageObjectLockedException() {
+    public StorageObjectLockedException(@NotNull final String id) {
         super(
                 new ErrorResponseData(
                         HttpStatus.CONFLICT,
-                        StorageObjectErrorConstants.STORAGE_OBJECT_LOCKED_ERROR
+                        StorageObjectErrorConstants.STORAGE_OBJECT_LOCKED_ERROR.formatted(id)
                 )
         );
     }

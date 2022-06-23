@@ -20,11 +20,10 @@ import dev.d1s.hole.controller.StorageObjectController;
 import dev.d1s.hole.dto.storageObject.StorageObjectDto;
 import dev.d1s.hole.dto.storageObject.StorageObjectUpdateDto;
 import dev.d1s.hole.entity.storageObject.StorageObject;
-import dev.d1s.hole.properties.SslConfigurationProperties;
-import dev.d1s.hole.service.StorageObjectService;
+import dev.d1s.hole.factory.LocationFactory;
+import dev.d1s.hole.service.storageObject.StorageObjectService;
 import dev.d1s.security.configuration.annotation.Secured;
 import dev.d1s.teabag.dto.DtoConverter;
-import dev.d1s.teabag.web.ServletUriComponentsBuilderKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,7 +40,7 @@ public class StorageObjectControllerImpl implements StorageObjectController {
 
     private StorageObjectService storageObjectService;
 
-    private SslConfigurationProperties sslConfigurationProperties;
+    private LocationFactory locationFactory;
 
     private DtoConverter<StorageObjectUpdateDto, StorageObject> storageObjectUpdateDtoConverter;
 
@@ -68,18 +67,9 @@ public class StorageObjectControllerImpl implements StorageObjectController {
     @NotNull
     @Secured
     @Override
-    public ResponseEntity<Set<StorageObjectDto>> getAllObjects(@Nullable final String group) {
+    public ResponseEntity<Set<StorageObjectDto>> getAllObjects() {
         return ResponseEntity.ok(
-                storageObjectService.getAllObjects(group, true).dtos()
-        );
-    }
-
-    @NotNull
-    @Secured
-    @Override
-    public ResponseEntity<Set<String>> getAvailableGroups() {
-        return ResponseEntity.ok(
-                storageObjectService.getAvailableGroups()
+                storageObjectService.getAllObjects(true).dtos()
         );
     }
 
@@ -90,12 +80,8 @@ public class StorageObjectControllerImpl implements StorageObjectController {
         final var createdObject = storageObjectService.createObject(content, group, encryptionKey).dto();
 
         return ResponseEntity.created(
-                ServletUriComponentsBuilderKt.buildFromCurrentRequest(b -> {
-                            ServletUriComponentsBuilderKt.configureSsl(b, sslConfigurationProperties.isFallBackToHttps());
-                            return b.path("/" + Objects.requireNonNull(createdObject).id())
-                                    .build()
-                                    .toUri();
-                        }
+                locationFactory.createLocation(
+                        Objects.requireNonNull(createdObject).id()
                 )
         ).body(createdObject);
     }
@@ -136,8 +122,8 @@ public class StorageObjectControllerImpl implements StorageObjectController {
     }
 
     @Autowired
-    public void setSslConfigurationProperties(final SslConfigurationProperties sslConfigurationProperties) {
-        this.sslConfigurationProperties = sslConfigurationProperties;
+    public void setLocationFactory(final LocationFactory locationFactory) {
+        this.locationFactory = locationFactory;
     }
 
     @Autowired

@@ -17,7 +17,6 @@
 package dev.d1s.hole.controller;
 
 import dev.d1s.hole.constant.mapping.storageObject.StorageObjectRequestMappingConstants;
-import dev.d1s.hole.constant.regex.RegexConstants;
 import dev.d1s.hole.dto.storageObject.StorageObjectDto;
 import dev.d1s.hole.dto.storageObject.StorageObjectUpdateDto;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +29,6 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Pattern;
 import java.util.Set;
 
 @Validated
@@ -58,14 +56,7 @@ public interface StorageObjectController {
 
     @NotNull
     @GetMapping(StorageObjectRequestMappingConstants.GET_ALL_OBJECTS_MAPPING)
-    ResponseEntity<Set<StorageObjectDto>> getAllObjects(
-            @Nullable
-            @RequestParam(required = false) final String group
-    );
-
-    @NotNull
-    @GetMapping(StorageObjectRequestMappingConstants.GET_AVAILABLE_GROUPS_MAPPING)
-    ResponseEntity<Set<String>> getAvailableGroups();
+    ResponseEntity<Set<StorageObjectDto>> getAllObjects();
 
     @NotNull
     @PostMapping(StorageObjectRequestMappingConstants.POST_OBJECT_MAPPING)
@@ -74,7 +65,7 @@ public interface StorageObjectController {
             @RequestParam final MultipartFile content,
             @NotNull
             @RequestParam
-            @Pattern(regexp = RegexConstants.COMMON_NAME_REGEX) final String group,
+            @NotBlank final String group,
             @Nullable
             @RequestParam(required = false) final String encryptionKey
     );

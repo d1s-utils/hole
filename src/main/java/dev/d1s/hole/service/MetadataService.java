@@ -16,6 +16,7 @@
 
 package dev.d1s.hole.service;
 
+import dev.d1s.hole.entity.common.MetadataAware;
 import dev.d1s.hole.entity.metadata.MetadataProperty;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,4 +29,8 @@ public interface MetadataService {
 
     @NotNull
     MetadataProperty saveMetadataProperty(@NotNull final MetadataProperty metadataProperty);
+
+    void checkMetadata(@NotNull final MetadataAware metadataAware);
+
+    void transferMetadata(@NotNull final MetadataAware from, @NotNull final MetadataAware to);
 }

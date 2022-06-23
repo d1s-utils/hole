@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-package dev.d1s.hole.service.impl;
+package dev.d1s.hole.service.impl.storageObject;
 
 import dev.d1s.advice.exception.BadRequestException;
 import dev.d1s.advice.exception.NotFoundException;
 import dev.d1s.hole.accessor.ObjectStorageAccessor;
 import dev.d1s.hole.constant.contentDisposition.ContentDispositionConstants;
 import dev.d1s.hole.constant.error.EncryptionErrorConstants;
-import dev.d1s.hole.constant.error.MetadataErrorConstants;
-import dev.d1s.hole.constant.error.StorageObjectErrorConstants;
+import dev.d1s.hole.constant.error.storageObject.StorageObjectErrorConstants;
 import dev.d1s.hole.constant.longPolling.StorageObjectLongPollingConstants;
 import dev.d1s.hole.dto.common.EntityWithDto;
 import dev.d1s.hole.dto.common.EntityWithDtoSet;
@@ -35,7 +34,8 @@ import dev.d1s.hole.repository.StorageObjectRepository;
 import dev.d1s.hole.service.EncryptionService;
 import dev.d1s.hole.service.LockService;
 import dev.d1s.hole.service.MetadataService;
-import dev.d1s.hole.service.StorageObjectService;
+import dev.d1s.hole.service.storageObject.StorageObjectGroupService;
+import dev.d1s.hole.service.storageObject.StorageObjectService;
 import dev.d1s.hole.util.FileNameUtils;
 import dev.d1s.lp.server.publisher.AsyncLongPollingEventPublisher;
 import dev.d1s.teabag.dto.DtoConverter;
@@ -69,7 +69,6 @@ import java.io.InputStream;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 public class StorageObjectServiceImpl implements StorageObjectService, InitializingBean {
@@ -98,6 +97,8 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
 
     private MetadataService metadataService;
 
+    private StorageObjectGroupService storageObjectGroupService;
+
     private StorageObjectServiceImpl storageObjectServiceImpl;
 
     @NotNull
@@ -108,7 +109,7 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
             final boolean requireDto
     ) {
         final var object = storageObjectRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException(StorageObjectErrorConstants.STORAGE_OBJECT_NOT_FOUND_ERROR));
+                .orElseThrow(() -> new NotFoundException(StorageObjectErrorConstants.STORAGE_OBJECT_NOT_FOUND_ERROR.formatted(id)));
 
         log.debug("Found storage object: {}", object);
 
@@ -226,17 +227,8 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
     @NotNull
     @Override
     @Transactional(readOnly = true)
-    public EntityWithDtoSet<StorageObject, StorageObjectDto> getAllObjects(
-            @Nullable final String group,
-            final boolean requireDto
-    ) {
-        final Set<StorageObject> objects;
-
-        if (group != null) {
-            objects = storageObjectRepository.findByObjectGroup(group);
-        } else {
-            objects = new HashSet<>(storageObjectRepository.findAll());
-        }
+    public EntityWithDtoSet<StorageObject, StorageObjectDto> getAllObjects(final boolean requireDto) {
+        final Set<StorageObject> objects = new HashSet<>(storageObjectRepository.findAll());
 
         log.debug("Found storage objects: {}", objects);
 
@@ -248,13 +240,6 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
                         requireDto
                 )
         );
-    }
-
-    @NotNull
-    @Override
-    @Transactional(readOnly = true)
-    public Set<String> getAvailableGroups() {
-        return storageObjectRepository.findAllGroups();
     }
 
     @NotNull
@@ -273,7 +258,7 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
         final StorageObject object = storageObjectRepository.save(
                 new StorageObject(
                         filename,
-                        group,
+                        storageObjectGroupService.getGroup(group, false).entity(),
                         !StringUtils.isBlank(encryptionKey),
                         this.createSha256Digest(content),
                         this.detectContentType(content, filename),
@@ -312,27 +297,12 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
     ) {
         final var foundObject = storageObjectServiceImpl.getObject(id, false).entity();
 
-        final var propertySet = new HashSet<String>();
-
-        for (final var p : storageObject.getMetadata()) {
-            if (!propertySet.add(p.getProperty())) {
-                throw new BadRequestException(MetadataErrorConstants.DUPLICATE_METADATA_PROPERTY_ERROR);
-            }
-        }
+        metadataService.checkMetadata(storageObject);
 
         foundObject.setName(storageObject.getName());
-        foundObject.setObjectGroup(storageObject.getObjectGroup());
-        foundObject.setMetadata(
-                storageObject.getMetadata()
-                        .stream()
-                        .map(metadataProperty ->
-                                metadataService.findMetadataPropertyByPropertyNameAndValue(
-                                        metadataProperty.getProperty(),
-                                        metadataProperty.getValue()
-                                ).orElse(metadataService.saveMetadataProperty(metadataProperty))
-                        )
-                        .collect(Collectors.toSet())
-        );
+        foundObject.setGroup(storageObject.getGroup());
+
+        metadataService.transferMetadata(storageObject, foundObject);
 
         final var savedObject = storageObjectRepository.save(foundObject);
 
@@ -423,23 +393,24 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
     @Override
     @Transactional
     public void deleteObject(@NotNull final String id) {
-        final var object = storageObjectServiceImpl.getObject(id, false).entity();
+        final var object = storageObjectServiceImpl.getObject(id, true);
+        final var entity = object.entity();
 
-        storageObjectRepository.delete(object);
+        storageObjectRepository.delete(entity);
 
         try {
-            lockService.lock(object);
+            lockService.lock(entity);
 
-            objectStorageAccessor.deleteObject(object);
+            objectStorageAccessor.deleteObject(entity);
         } finally {
-            lockService.unlock(object);
-            lockService.removeLock(object);
+            lockService.unlock(entity);
+            lockService.removeLock(entity);
         }
 
         publisher.publish(
                 StorageObjectLongPollingConstants.STORAGE_OBJECT_DELETED_GROUP,
-                object.getId(),
-                storageObjectDtoConverter.convertToDto(object)
+                entity.getId(),
+                object.dto()
         );
 
         log.debug("Deleted storage object: {}", object);
@@ -545,6 +516,11 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
     @Autowired
     public void setMetadataService(final MetadataService metadataService) {
         this.metadataService = metadataService;
+    }
+
+    @Autowired
+    public void setStorageObjectGroupService(final StorageObjectGroupService storageObjectGroupService) {
+        this.storageObjectGroupService = storageObjectGroupService;
     }
 
     @Lazy

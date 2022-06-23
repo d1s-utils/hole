@@ -55,7 +55,7 @@ public class LockServiceImpl implements LockService {
 
         try {
             if (!lock.tryLock(LOCK_TIMEOUT, TimeUnit.SECONDS)) {
-                throw new StorageObjectLockedException();
+                throw new StorageObjectLockedException(id);
             }
 
             log.debug("Locked object {}", id);

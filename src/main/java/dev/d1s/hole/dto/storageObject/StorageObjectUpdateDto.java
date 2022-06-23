@@ -16,12 +16,10 @@
 
 package dev.d1s.hole.dto.storageObject;
 
-import dev.d1s.hole.constant.regex.RegexConstants;
 import dev.d1s.hole.dto.metadata.MetadataPropertyDto;
 import org.jetbrains.annotations.NotNull;
 
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Pattern;
 import java.util.Set;
 
 public record StorageObjectUpdateDto(
@@ -31,10 +29,11 @@ public record StorageObjectUpdateDto(
         String name,
 
         @NotNull
-        @Pattern(regexp = RegexConstants.COMMON_NAME_REGEX)
+        @NotBlank
         String group,
 
         @NotNull
+        @javax.validation.constraints.NotNull
         Set<MetadataPropertyDto> metadata
 ) {
 }
