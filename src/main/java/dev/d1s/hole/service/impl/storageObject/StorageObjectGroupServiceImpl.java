@@ -97,9 +97,7 @@ public class StorageObjectGroupServiceImpl implements StorageObjectGroupService,
     public EntityWithDto<StorageObjectGroup, StorageObjectGroupDto> createGroup(@NotNull final StorageObjectGroup group) {
         metadataService.checkMetadata(group);
 
-        if (storageObjectGroupRepository.findByName(group.getName()).isPresent()) {
-            throw new UnprocessableEntityException(StorageObjectGroupErrorConstants.STORAGE_OBJECT_GROUP_NAME_ALREADY_EXISTS_ERROR);
-        }
+        this.checkGroupName(group, false);
 
         final var savedGroup = storageObjectGroupRepository.save(group);
 
@@ -123,6 +121,8 @@ public class StorageObjectGroupServiceImpl implements StorageObjectGroupService,
         final var foundGroup = storageObjectGroupServiceImpl.getGroup(id, false).entity();
 
         metadataService.checkMetadata(group);
+
+        this.checkGroupName(group, true);
 
         foundGroup.setName(group.getName());
 
@@ -191,5 +191,13 @@ public class StorageObjectGroupServiceImpl implements StorageObjectGroupService,
     @Autowired
     public void setStorageObjectGroupServiceImpl(final StorageObjectGroupServiceImpl storageObjectGroupServiceImpl) {
         this.storageObjectGroupServiceImpl = storageObjectGroupServiceImpl;
+    }
+
+    private void checkGroupName(final StorageObjectGroup group, final boolean updateOperation) {
+        final var foundGroup = storageObjectGroupRepository.findByName(group.getName());
+
+        if (foundGroup.isPresent() && !(updateOperation && foundGroup.get().getName().equals(group.getName()))) {
+            throw new UnprocessableEntityException(StorageObjectGroupErrorConstants.STORAGE_OBJECT_GROUP_NAME_ALREADY_EXISTS_ERROR);
+        }
     }
 }
