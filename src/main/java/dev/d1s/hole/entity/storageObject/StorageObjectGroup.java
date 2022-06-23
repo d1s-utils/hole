@@ -44,7 +44,7 @@ public class StorageObjectGroup extends Identifiable implements MetadataAware {
     private Set<StorageObject> storageObjects;
 
     @NotNull
-    @ManyToMany
+    @ManyToMany(cascade = CascadeType.PERSIST)
     @JoinTable(
             name = "storage_object_group_metadata",
             joinColumns = @JoinColumn(name = "storage_object_group_id"),

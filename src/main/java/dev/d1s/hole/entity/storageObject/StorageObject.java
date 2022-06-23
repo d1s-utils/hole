@@ -63,7 +63,7 @@ public final class StorageObject extends Identifiable implements MetadataAware {
     private Set<StorageObjectAccess> storageObjectAccesses;
 
     @NotNull
-    @ManyToMany
+    @ManyToMany(cascade = CascadeType.PERSIST)
     @JoinTable(
             name = "storage_object_metadata",
             joinColumns = @JoinColumn(name = "storage_object_id"),
