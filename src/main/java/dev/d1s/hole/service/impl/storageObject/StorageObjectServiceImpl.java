@@ -67,7 +67,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 
 @Service
@@ -205,7 +204,10 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
             log.warn("Failed to write to response: {}. " +
                     "Perhaps the client disconnected without waiting for the completion.", e.getMessage());
         } finally {
-            objectStorageAccessor.closeInputStream(Objects.requireNonNull(in));
+            if (in != null) {
+                objectStorageAccessor.closeInputStream(in);
+            }
+
             lockService.unlock(id);
         }
 
