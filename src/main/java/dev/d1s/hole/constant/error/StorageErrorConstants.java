@@ -27,9 +27,6 @@ public final class StorageErrorConstants {
     public static final String STORAGE_PATH_NOT_A_DIRECTORY_ERROR =
             "The provided storage path is not a directory.";
 
-    public static final String STORAGE_PATH_NOT_READABLE_OR_WRITABLE_ERROR =
-            "The provided storage path must be readable and writable.";
-
     private StorageErrorConstants() {
     }
 }

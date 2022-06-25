@@ -107,10 +107,6 @@ public class ObjectStorageAccessorImpl implements ObjectStorageAccessor, Initial
         if (!Files.isDirectory(path)) {
             throw new IllegalStorageRootException(StorageErrorConstants.STORAGE_PATH_NOT_A_DIRECTORY_ERROR);
         }
-
-        if (!Files.isReadable(path) || !Files.isWritable(path)) {
-            throw new IllegalStorageRootException(StorageErrorConstants.STORAGE_PATH_NOT_READABLE_OR_WRITABLE_ERROR);
-        }
     }
 
     @Autowired
