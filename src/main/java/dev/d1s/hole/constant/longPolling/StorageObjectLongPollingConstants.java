@@ -20,9 +20,6 @@ public final class StorageObjectLongPollingConstants {
 
     private static final String GROUP_PREFIX = "storage-object-";
 
-    public static final String STORAGE_OBJECT_ACCESSED_GROUP =
-            StorageObjectLongPollingConstants.GROUP_PREFIX + "accessed";
-
     public static final String STORAGE_OBJECT_CREATED_GROUP =
             StorageObjectLongPollingConstants.GROUP_PREFIX + "created";
 

@@ -17,11 +17,9 @@
 package dev.d1s.hole.dto.converter.storageObject;
 
 import dev.d1s.hole.dto.metadata.MetadataPropertyDto;
-import dev.d1s.hole.dto.storageObject.StorageObjectAccessDto;
 import dev.d1s.hole.dto.storageObject.StorageObjectDto;
 import dev.d1s.hole.entity.metadata.MetadataProperty;
 import dev.d1s.hole.entity.storageObject.StorageObject;
-import dev.d1s.hole.entity.storageObject.StorageObjectAccess;
 import dev.d1s.teabag.dto.DtoConverter;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,8 +30,6 @@ import java.util.stream.Collectors;
 
 @Component
 public class StorageObjectDtoConverter implements DtoConverter<StorageObjectDto, StorageObject> {
-
-    private DtoConverter<StorageObjectAccessDto, StorageObjectAccess> storageObjectAccessDtoConverter;
 
     private DtoConverter<MetadataPropertyDto, MetadataProperty> metadataPropertyDtoConverter;
 
@@ -47,10 +43,6 @@ public class StorageObjectDtoConverter implements DtoConverter<StorageObjectDto,
                 Objects.requireNonNull(storageObject.getGroup().getId()),
                 storageObject.isEncrypted(),
                 Objects.requireNonNull(storageObject.getDigest()),
-                storageObject.getStorageObjectAccesses()
-                        .stream()
-                        .map(storageObjectAccessDtoConverter::convertToDto)
-                        .collect(Collectors.toSet()),
                 storageObject.getMetadata()
                         .stream()
                         .map(metadataPropertyDtoConverter::convertToDto)
@@ -62,11 +54,6 @@ public class StorageObjectDtoConverter implements DtoConverter<StorageObjectDto,
     @Override
     public StorageObject convertToEntity(@NotNull final StorageObjectDto storageObjectDto) {
         throw new UnsupportedOperationException();
-    }
-
-    @Autowired
-    public void setStorageObjectAccessDtoConverter(final DtoConverter<StorageObjectAccessDto, StorageObjectAccess> storageObjectAccessDtoConverter) {
-        this.storageObjectAccessDtoConverter = storageObjectAccessDtoConverter;
     }
 
     @Autowired
