@@ -44,10 +44,6 @@ public interface StorageObjectGroupController {
     ResponseEntity<Set<StorageObjectGroupDto>> getAllGroups();
 
     @NotNull
-    @GetMapping(StorageObjectGroupRequestMappingConstants.GET_ALL_GROUP_NAMES_MAPPING)
-    ResponseEntity<Set<String>> getAllGroupNames();
-
-    @NotNull
     @PostMapping(StorageObjectGroupRequestMappingConstants.POST_GROUP_MAPPING)
     ResponseEntity<StorageObjectGroupDto> postGroup(
             @NotNull
