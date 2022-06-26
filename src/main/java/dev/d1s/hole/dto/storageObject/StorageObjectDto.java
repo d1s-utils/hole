@@ -40,10 +40,6 @@ public record StorageObjectDto(
 
         @NotNull
         String digest,
-
-        @NotNull
-        Set<StorageObjectAccessDto> accesses,
-
         @NotNull
         Set<MetadataPropertyDto> metadata
 ) {

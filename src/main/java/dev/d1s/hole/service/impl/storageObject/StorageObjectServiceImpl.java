@@ -25,11 +25,8 @@ import dev.d1s.hole.constant.error.storageObject.StorageObjectErrorConstants;
 import dev.d1s.hole.constant.longPolling.StorageObjectLongPollingConstants;
 import dev.d1s.hole.dto.common.EntityWithDto;
 import dev.d1s.hole.dto.common.EntityWithDtoSet;
-import dev.d1s.hole.dto.storageObject.StorageObjectAccessDto;
 import dev.d1s.hole.dto.storageObject.StorageObjectDto;
 import dev.d1s.hole.entity.storageObject.StorageObject;
-import dev.d1s.hole.entity.storageObject.StorageObjectAccess;
-import dev.d1s.hole.repository.StorageObjectAccessRepository;
 import dev.d1s.hole.repository.StorageObjectRepository;
 import dev.d1s.hole.service.EncryptionService;
 import dev.d1s.hole.service.LockService;
@@ -76,11 +73,8 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
 
     private StorageObjectRepository storageObjectRepository;
 
-    private StorageObjectAccessRepository storageObjectAccessRepository;
-
     private DtoConverter<StorageObjectDto, StorageObject> storageObjectDtoConverter;
 
-    private DtoConverter<StorageObjectAccessDto, StorageObjectAccess> storageObjectAccessDtoConverter;
 
     private DtoSetConverterFacade<StorageObjectDto, StorageObject> storageObjectDtoSetConverter;
 
@@ -123,7 +117,6 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
     }
 
     @Override
-    @Transactional
     public void writeRawObjectToWeb(
             @NotNull final String id,
             @Nullable final String encryptionKey,
@@ -211,18 +204,6 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
             lockService.unlock(id);
         }
 
-        final var objectAccess = storageObjectAccessRepository.save(new StorageObjectAccess(object));
-
-        object.getStorageObjectAccesses().add(objectAccess);
-
-        storageObjectRepository.save(object);
-
-        publisher.publish(
-                StorageObjectLongPollingConstants.STORAGE_OBJECT_ACCESSED_GROUP,
-                object.getId(),
-                storageObjectAccessDtoConverter.convertToDto(objectAccess)
-        );
-
         log.debug("Read raw storage object: {}", object);
     }
 
@@ -265,7 +246,6 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
                         this.createSha256Digest(content),
                         this.detectContentType(content, filename),
                         contentSize,
-                        new HashSet<>(),
                         new HashSet<>()
                 )
         );
@@ -474,20 +454,9 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
     }
 
     @Autowired
-    public void setStorageObjectAccessRepository(final StorageObjectAccessRepository storageObjectAccessRepository) {
-        this.storageObjectAccessRepository = storageObjectAccessRepository;
-    }
-
-    @Autowired
     public void setStorageObjectDtoConverter(
             final DtoConverter<StorageObjectDto, StorageObject> storageObjectDtoConverter) {
         this.storageObjectDtoConverter = storageObjectDtoConverter;
-    }
-
-    @Autowired
-    public void setStorageObjectAccessDtoConverter(
-            final DtoConverter<StorageObjectAccessDto, StorageObjectAccess> storageObjectAccessDtoConverter) {
-        this.storageObjectAccessDtoConverter = storageObjectAccessDtoConverter;
     }
 
     @Autowired

@@ -50,18 +50,6 @@
             </column>
         </createTable>
 
-        <createTable tableName="storage_object_access">
-            <column name="id" type="VARCHAR(255)">
-                <constraints nullable="false" primaryKey="true" primaryKeyName="pk_storage_object_access"/>
-            </column>
-            <column name="time" type="DATETIME">
-                <constraints nullable="false"/>
-            </column>
-            <column name="storage_object_id" type="VARCHAR(255)">
-                <constraints nullable="false"/>
-            </column>
-        </createTable>
-
         <createTable tableName="storage_object_group">
             <column name="id" type="VARCHAR(255)">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="pk_storage_object_group"/>
@@ -109,11 +97,6 @@
                              primaryKeyName="pk_storage_object_group_metadata_metadata"/>
             </column>
         </createTable>
-
-        <addForeignKeyConstraint baseTableName="storage_object_access" baseColumnNames="storage_object_id"
-                                 constraintName="fr_storage_object_access_on_storage_object"
-                                 referencedTableName="storage_object"
-                                 referencedColumnNames="id"/>
 
         <addForeignKeyConstraint baseTableName="storage_object" baseColumnNames="group_id"
                                  constraintName="fr_storage_object_on_storage_object_group"

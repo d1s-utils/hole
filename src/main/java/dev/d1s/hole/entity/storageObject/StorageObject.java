@@ -59,10 +59,6 @@ public final class StorageObject extends Identifiable implements MetadataAware {
     private StorageObjectGroup group;
 
     @NotNull
-    @OneToMany(mappedBy = "storageObject", cascade = CascadeType.ALL)
-    private Set<StorageObjectAccess> storageObjectAccesses;
-
-    @NotNull
     @ManyToMany(cascade = CascadeType.PERSIST)
     @JoinTable(
             name = "storage_object_metadata",
@@ -78,7 +74,6 @@ public final class StorageObject extends Identifiable implements MetadataAware {
             @Nullable final String digest,
             @Nullable final String contentType,
             final long contentLength,
-            @NotNull final Set<StorageObjectAccess> storageObjectAccesses,
             @NotNull final Set<MetadataProperty> metadata
     ) {
         this.name = name;
@@ -87,7 +82,6 @@ public final class StorageObject extends Identifiable implements MetadataAware {
         this.digest = digest;
         this.contentType = contentType;
         this.contentLength = contentLength;
-        this.storageObjectAccesses = storageObjectAccesses;
         this.metadata = metadata;
     }
 

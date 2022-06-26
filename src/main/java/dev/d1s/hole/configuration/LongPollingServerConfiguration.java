@@ -31,7 +31,6 @@ public class LongPollingServerConfiguration implements LongPollingServerConfigur
     @Override
     public Set<String> getAvailableGroups() {
         return Set.of(
-                StorageObjectLongPollingConstants.STORAGE_OBJECT_ACCESSED_GROUP,
                 StorageObjectLongPollingConstants.STORAGE_OBJECT_CREATED_GROUP,
                 StorageObjectLongPollingConstants.STORAGE_OBJECT_UPDATED_GROUP,
                 StorageObjectLongPollingConstants.STORAGE_OBJECT_OVERWRITTEN_GROUP,
