@@ -59,13 +59,6 @@ public class StorageObjectGroupControllerImpl implements StorageObjectGroupContr
     @NotNull
     @Secured
     @Override
-    public ResponseEntity<Set<String>> getAllGroupNames() {
-        return ResponseEntity.ok(storageObjectGroupService.getAllGroupNames());
-    }
-
-    @NotNull
-    @Secured
-    @Override
     public ResponseEntity<StorageObjectGroupDto> postGroup(@NotNull final StorageObjectGroupAlterationDto alteration) {
         final var createdGroup = storageObjectGroupService.createGroup(
                 storageObjectGroupAlterationDtoConverter.convertToEntity(alteration)
