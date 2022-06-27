@@ -19,6 +19,7 @@ package dev.d1s.hole.dto.storageObject;
 import dev.d1s.hole.dto.metadata.MetadataPropertyDto;
 import org.jetbrains.annotations.NotNull;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import java.util.Set;
 
@@ -34,6 +35,6 @@ public record StorageObjectUpdateDto(
 
         @NotNull
         @javax.validation.constraints.NotNull
-        Set<MetadataPropertyDto> metadata
+        Set<@Valid MetadataPropertyDto> metadata
 ) {
 }

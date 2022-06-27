@@ -20,6 +20,7 @@ import dev.d1s.hole.constant.regex.RegexConstants;
 import dev.d1s.hole.dto.metadata.MetadataPropertyDto;
 import org.jetbrains.annotations.NotNull;
 
+import javax.validation.Valid;
 import javax.validation.constraints.Pattern;
 import java.util.Set;
 
@@ -31,6 +32,6 @@ public record StorageObjectGroupAlterationDto(
 
         @NotNull
         @javax.validation.constraints.NotNull
-        Set<MetadataPropertyDto> metadata
+        Set<@Valid MetadataPropertyDto> metadata
 ) {
 }
