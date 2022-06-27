@@ -14,12 +14,16 @@
  * limitations under the License.
  */
 
-package dev.d1s.hole.constant.regex;
+package dev.d1s.hole.dto.common;
 
-public final class RegexConstants {
+import org.jetbrains.annotations.NotNull;
 
-    public static final String COMMON_NAME_REGEX = "[a-z\\d]+((\\\\?[-._][a-z\\d]+)+)?";
+public record EntityUpdatedEventData<T>(
 
-    private RegexConstants() {
-    }
+        @NotNull
+        T lastState,
+
+        @NotNull
+        T newState
+) {
 }

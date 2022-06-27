@@ -23,6 +23,7 @@ import dev.d1s.hole.constant.contentDisposition.ContentDispositionConstants;
 import dev.d1s.hole.constant.error.EncryptionErrorConstants;
 import dev.d1s.hole.constant.error.storageObject.StorageObjectErrorConstants;
 import dev.d1s.hole.constant.longPolling.StorageObjectLongPollingConstants;
+import dev.d1s.hole.dto.common.EntityUpdatedEventData;
 import dev.d1s.hole.dto.common.EntityWithDto;
 import dev.d1s.hole.dto.common.EntityWithDtoSet;
 import dev.d1s.hole.dto.storageObject.StorageObjectDto;
@@ -63,6 +64,7 @@ import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -238,17 +240,20 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
         final var filename = FileNameUtils.sanitizeAndCheck(content.getOriginalFilename());
         final var contentSize = content.getSize();
 
-        final StorageObject object = storageObjectRepository.save(
-                new StorageObject(
-                        filename,
-                        storageObjectGroupService.getGroup(group, false).entity(),
-                        !StringUtils.isBlank(encryptionKey),
-                        this.createSha256Digest(content),
-                        this.detectContentType(content, filename),
-                        contentSize,
-                        new HashSet<>()
-                )
+        final var objectToSave = new StorageObject(
+                filename,
+                storageObjectGroupService.getGroup(group, false).entity(),
+                !StringUtils.isBlank(encryptionKey),
+                this.createSha256Digest(content),
+                this.detectContentType(content, filename),
+                contentSize,
+                new HashSet<>()
         );
+
+        // yeah... this is reasonable
+        objectToSave.setCreationTime(Instant.now());
+
+        final StorageObject object = storageObjectRepository.save(objectToSave);
 
         try {
             lockService.lock(object);
@@ -278,6 +283,7 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
             @NotNull final StorageObject storageObject
     ) {
         final var foundObject = storageObjectServiceImpl.getObject(id, false).entity();
+        final var oldObjectDto = storageObjectDtoConverter.convertToDto(foundObject);
 
         metadataService.checkMetadata(storageObject);
 
@@ -293,7 +299,10 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
         publisher.publish(
                 StorageObjectLongPollingConstants.STORAGE_OBJECT_UPDATED_GROUP,
                 savedObject.getId(),
-                objectDto
+                new EntityUpdatedEventData<>(
+                        oldObjectDto,
+                        objectDto
+                )
         );
 
         log.debug("Updated storage object: {}", savedObject);
@@ -311,6 +320,8 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
         this.checkContent(content, encryptionKey);
 
         final var object = storageObjectServiceImpl.getObject(id, false).entity();
+
+        final var oldObjectDto = storageObjectDtoConverter.convertToDto(object);
 
         final var encryptionUsed = !StringUtils.isBlank(encryptionKey);
 
@@ -366,7 +377,10 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
         publisher.publish(
                 StorageObjectLongPollingConstants.STORAGE_OBJECT_OVERWRITTEN_GROUP,
                 object.getId(),
-                null
+                new EntityUpdatedEventData<>(
+                        oldObjectDto,
+                        storageObjectDtoConverter.convertToDto(object)
+                )
         );
 
         log.debug("Overwrote storage object: {}", object);
