@@ -18,10 +18,14 @@ package dev.d1s.hole.entity.common;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.GenericGenerator;
 import org.jetbrains.annotations.Nullable;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.MappedSuperclass;
 import java.time.Instant;
 
 @Getter
@@ -37,13 +41,7 @@ public abstract class Identifiable {
     private String id;
 
     @Nullable
-    @Column(nullable = false)
+    @CreationTimestamp
+    @Column(updatable = false)
     private Instant creationTime;
-
-    @PrePersist
-    private void setCreationTime() {
-        if (this.creationTime == null) {
-            this.creationTime = Instant.now();
-        }
-    }
 }

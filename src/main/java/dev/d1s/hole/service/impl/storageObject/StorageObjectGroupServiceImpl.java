@@ -20,6 +20,7 @@ import dev.d1s.advice.exception.NotFoundException;
 import dev.d1s.advice.exception.UnprocessableEntityException;
 import dev.d1s.hole.constant.error.storageObject.StorageObjectGroupErrorConstants;
 import dev.d1s.hole.constant.longPolling.StorageObjectGroupLongPollingConstants;
+import dev.d1s.hole.dto.common.EntityUpdatedEventData;
 import dev.d1s.hole.dto.common.EntityWithDto;
 import dev.d1s.hole.dto.common.EntityWithDtoSet;
 import dev.d1s.hole.dto.storageObject.StorageObjectGroupDto;
@@ -41,6 +42,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.HashSet;
 
 @Service
@@ -99,6 +101,9 @@ public class StorageObjectGroupServiceImpl implements StorageObjectGroupService,
 
         this.checkGroupName(group, false);
 
+        // yeah... this is reasonable
+        group.setCreationTime(Instant.now());
+
         final var savedGroup = storageObjectGroupRepository.save(group);
 
         final var groupDto = storageObjectGroupDtoConverter.convertToDto(savedGroup);
@@ -120,6 +125,8 @@ public class StorageObjectGroupServiceImpl implements StorageObjectGroupService,
     public EntityWithDto<StorageObjectGroup, StorageObjectGroupDto> updateGroup(@NotNull final String id, @NotNull final StorageObjectGroup group) {
         final var foundGroup = storageObjectGroupServiceImpl.getGroup(id, false).entity();
 
+        final var oldGroupDto = storageObjectGroupDtoConverter.convertToDto(foundGroup);
+
         metadataService.checkMetadata(group);
 
         this.checkGroupName(group, true);
@@ -135,7 +142,10 @@ public class StorageObjectGroupServiceImpl implements StorageObjectGroupService,
         publisher.publish(
                 StorageObjectGroupLongPollingConstants.OBJECT_GROUP_UPDATED,
                 savedGroup.getId(),
-                groupDto
+                new EntityUpdatedEventData<>(
+                        oldGroupDto,
+                        groupDto
+                )
         );
 
         log.debug("Updated object group: {}", savedGroup);
