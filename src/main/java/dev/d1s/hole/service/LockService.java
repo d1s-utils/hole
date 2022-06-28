@@ -21,13 +21,21 @@ import org.jetbrains.annotations.NotNull;
 
 public interface LockService {
 
-    void lock(@NotNull final String id);
+    void lockRead(@NotNull final String id);
 
-    void lock(@NotNull final StorageObject object);
+    void lockRead(@NotNull final StorageObject object);
 
-    void unlock(@NotNull final String id);
+    void lockWrite(@NotNull final String id);
 
-    void unlock(@NotNull final StorageObject object);
+    void lockWrite(@NotNull final StorageObject object);
+
+    void unlockRead(@NotNull final String id);
+
+    void unlockRead(@NotNull final StorageObject object);
+
+    void unlockWrite(@NotNull final String id);
+
+    void unlockWrite(@NotNull final StorageObject object);
 
     void removeLock(@NotNull final StorageObject object);
 }
