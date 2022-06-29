@@ -30,8 +30,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Service
 public class LockServiceImpl implements LockService {
@@ -40,68 +40,38 @@ public class LockServiceImpl implements LockService {
 
     private static final Logger log = LogManager.getLogger();
 
-    private final Map<String, ReadWriteLock> lockMap = new ConcurrentHashMap<>();
+    private final Map<String, Lock> lockMap = new ConcurrentHashMap<>();
 
     private LockServiceImpl lockServiceImpl;
 
     @Override
-    public void lockRead(@NotNull String id) {
+    public void lock(@NotNull String id) {
         try {
-            if (!this.getLock(id).readLock().tryLock(LOCK_TIMEOUT, TimeUnit.SECONDS)) {
+            if (!this.getLock(id).tryLock(LOCK_TIMEOUT, TimeUnit.SECONDS)) {
                 throw new StorageObjectLockedException(id);
             }
 
-            log.debug("Locked object {} for read", id);
+            log.debug("Locked object {}", id);
         } catch (final InterruptedException e) {
             throw new RuntimeException(e);
         }
     }
 
     @Override
-    public void lockRead(@NotNull StorageObject object) {
-        lockServiceImpl.lockRead(Objects.requireNonNull(object.getId()));
+    public void lock(@NotNull StorageObject object) {
+        lockServiceImpl.lock(Objects.requireNonNull(object.getId()));
     }
 
     @Override
-    public void lockWrite(@NotNull String id) {
-        try {
-            if (!this.getLock(id).writeLock().tryLock(LOCK_TIMEOUT, TimeUnit.SECONDS)) {
-                throw new StorageObjectLockedException(id);
-            }
+    public void unlock(@NotNull String id) {
+        this.getLockOrThrow(id).unlock();
 
-            log.debug("Locked object {} for write", id);
-        } catch (final InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+        log.debug("Unlocked object {}", id);
     }
 
     @Override
-    public void lockWrite(@NotNull StorageObject object) {
-        lockServiceImpl.lockWrite(Objects.requireNonNull(object.getId()));
-    }
-
-    @Override
-    public void unlockRead(@NotNull String id) {
-        this.getLockOrThrow(id).readLock().unlock();
-
-        log.debug("Unlocked object {} for read", id);
-    }
-
-    @Override
-    public void unlockRead(@NotNull StorageObject object) {
-        lockServiceImpl.unlockRead(Objects.requireNonNull(object.getId()));
-    }
-
-    @Override
-    public void unlockWrite(@NotNull String id) {
-        this.getLockOrThrow(id).writeLock().unlock();
-
-        log.debug("Unlocked object {} for write", id);
-    }
-
-    @Override
-    public void unlockWrite(@NotNull StorageObject object) {
-        lockServiceImpl.unlockWrite(Objects.requireNonNull(object.getId()));
+    public void unlock(@NotNull StorageObject object) {
+        lockServiceImpl.unlock(Objects.requireNonNull(object.getId()));
     }
 
     @Override
@@ -119,18 +89,18 @@ public class LockServiceImpl implements LockService {
         this.lockServiceImpl = lockServiceImpl;
     }
 
-    private ReadWriteLock getLock(final String id) {
+    private Lock getLock(final String id) {
         var lock = lockMap.get(id);
 
         if (lock == null) {
-            lock = new ReentrantReadWriteLock();
+            lock = new ReentrantLock();
             lockMap.put(id, lock);
         }
 
         return lock;
     }
 
-    private ReadWriteLock getLockOrThrow(final String id) {
+    private Lock getLockOrThrow(final String id) {
         var lock = lockMap.get(id);
 
         if (lock == null) {

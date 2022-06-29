@@ -161,7 +161,7 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
         InputStream in = null;
 
         try {
-            lockService.lockWrite(id);
+            lockService.lock(id);
 
             in = objectStorageAccessor.createInputStream(object);
 
@@ -203,7 +203,7 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
                 objectStorageAccessor.closeInputStream(in);
             }
 
-            lockService.unlockWrite(id);
+            lockService.unlock(id);
         }
 
         log.debug("Read raw storage object: {}", object);
@@ -256,13 +256,11 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
         final StorageObject object = storageObjectRepository.save(objectToSave);
 
         try {
-            lockService.lockRead(object);
-            lockService.lockWrite(object);
+            lockService.lock(object);
 
             this.writeObject(object, encryptionKey, content);
         } finally {
-            lockService.unlockRead(object);
-            lockService.unlockWrite(object);
+            lockService.unlock(object);
         }
 
         final var objectDto = storageObjectDtoConverter.convertToDto(object);
@@ -336,8 +334,7 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
         final var contentLength = content.getSize();
 
         try {
-            lockService.lockRead(object);
-            lockService.lockWrite(object);
+            lockService.lock(object);
 
             var needsUpdate = false;
 
@@ -374,8 +371,7 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
 
             this.writeObject(object, encryptionKey, content);
         } finally {
-            lockService.unlockRead(object);
-            lockService.unlockWrite(object);
+            lockService.unlock(object);
         }
 
         publisher.publish(
@@ -399,11 +395,11 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
         storageObjectRepository.delete(entity);
 
         try {
-            lockService.lockRead(entity);
+            lockService.lock(entity);
 
             objectStorageAccessor.deleteObject(entity);
         } finally {
-            lockService.unlockRead(entity);
+            lockService.unlock(entity);
             lockService.removeLock(entity);
         }
 
