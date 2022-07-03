@@ -233,11 +233,12 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
     public EntityWithDto<StorageObject, StorageObjectDto> createObject(
             @NotNull final MultipartFile content,
             @NotNull final String group,
-            @Nullable final String encryptionKey
+            @Nullable final String encryptionKey,
+            @Nullable final String name
     ) {
         this.checkContent(content, encryptionKey);
 
-        final var filename = FileNameUtils.sanitizeAndCheck(content.getOriginalFilename());
+        final var filename = this.getName(content, name);
         final var contentSize = content.getSize();
 
         final var objectToSave = new StorageObject(
@@ -315,7 +316,8 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
     public void overwriteObject(
             @NotNull final String id,
             @NotNull final MultipartFile content,
-            @Nullable final String encryptionKey
+            @Nullable final String encryptionKey,
+            @Nullable final String name
     ) {
         this.checkContent(content, encryptionKey);
 
@@ -327,9 +329,9 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
 
         final var digest = this.createSha256Digest(content);
 
-        final var sanitizedFileName = FileNameUtils.sanitizeAndCheck(content.getOriginalFilename());
+        final var objectName = this.getName(content, name);
 
-        final var contentType = this.detectContentType(content, sanitizedFileName);
+        final var contentType = this.detectContentType(content, objectName);
 
         final var contentLength = content.getSize();
 
@@ -348,8 +350,8 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
                 needsUpdate = true;
             }
 
-            if (!sanitizedFileName.equals(object.getName())) {
-                object.setName(sanitizedFileName);
+            if (!objectName.equals(object.getName())) {
+                object.setName(objectName);
                 needsUpdate = true;
             }
 
@@ -455,6 +457,18 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
         if (content.getSize() == 0 && encryptionKey != null) {
             throw new BadRequestException(EncryptionErrorConstants.NOTHING_TO_ENCRYPT_ERROR);
         }
+    }
+
+    private String getName(final MultipartFile content, final String nameOverride) {
+        final String name;
+
+        if (nameOverride == null) {
+            name = content.getOriginalFilename();
+        } else {
+            name = nameOverride;
+        }
+
+        return FileNameUtils.sanitizeAndCheck(name);
     }
 
     @Override
