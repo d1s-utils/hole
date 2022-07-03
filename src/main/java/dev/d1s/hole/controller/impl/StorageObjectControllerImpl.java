@@ -76,8 +76,13 @@ public class StorageObjectControllerImpl implements StorageObjectController {
     @NotNull
     @Secured
     @Override
-    public ResponseEntity<StorageObjectDto> postObject(@NotNull final MultipartFile content, @NotNull final String group, @Nullable final String encryptionKey) {
-        final var createdObject = storageObjectService.createObject(content, group, encryptionKey).dto();
+    public ResponseEntity<StorageObjectDto> postObject(
+            @NotNull final MultipartFile content,
+            @NotNull final String group,
+            @Nullable final String encryptionKey,
+            @Nullable final String name
+    ) {
+        final var createdObject = storageObjectService.createObject(content, group, encryptionKey, name).dto();
 
         return ResponseEntity.created(
                 locationFactory.createLocation(
@@ -101,8 +106,13 @@ public class StorageObjectControllerImpl implements StorageObjectController {
     @NotNull
     @Secured
     @Override
-    public ResponseEntity<?> putRawObject(@NotNull String id, @NotNull MultipartFile content, @Nullable final String encryptionKey) {
-        storageObjectService.overwriteObject(id, content, encryptionKey);
+    public ResponseEntity<?> putRawObject(
+            @NotNull String id,
+            @NotNull MultipartFile content,
+            @Nullable final String encryptionKey,
+            @Nullable final String name
+    ) {
+        storageObjectService.overwriteObject(id, content, encryptionKey, name);
 
         return ResponseEntity.noContent().build();
     }

@@ -48,7 +48,8 @@ public interface StorageObjectService {
     EntityWithDto<StorageObject, StorageObjectDto> createObject(
             @NotNull final MultipartFile content,
             @NotNull final String group,
-            @Nullable final String encryptionKey
+            @Nullable final String encryptionKey,
+            @Nullable final String name
     );
 
     @NotNull
@@ -60,7 +61,8 @@ public interface StorageObjectService {
     void overwriteObject(
             @NotNull final String id,
             @NotNull final MultipartFile content,
-            @Nullable final String encryptionKey
+            @Nullable final String encryptionKey,
+            @Nullable final String name
     );
 
     void deleteObject(@NotNull final String id);

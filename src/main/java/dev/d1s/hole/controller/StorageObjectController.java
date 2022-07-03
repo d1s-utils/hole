@@ -67,7 +67,9 @@ public interface StorageObjectController {
             @RequestParam
             @NotBlank final String group,
             @Nullable
-            @RequestParam(required = false) final String encryptionKey
+            @RequestParam(required = false) final String encryptionKey,
+            @Nullable
+            @RequestParam(required = false) final String name
     );
 
     @NotNull
@@ -90,7 +92,9 @@ public interface StorageObjectController {
             @NotNull
             @RequestParam final MultipartFile content,
             @Nullable
-            @RequestParam(required = false) final String encryptionKey
+            @RequestParam(required = false) final String encryptionKey,
+            @Nullable
+            @RequestParam(required = false) final String name
     );
 
     @NotNull
