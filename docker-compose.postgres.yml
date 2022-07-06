@@ -17,27 +17,8 @@ services:
       POSTGRES_PASSWORD: "hole_data"
       PGDATA: /var/lib/postgresql/data/pgdata
     restart: always
-    expose:
-      - 5432
-    networks:
-      - hole-net
+    ports:
+      - "5432:5432"
     volumes:
       - db-data-postgres:/var/lib/postgresql/data
       - db-data-postgres-config:/var/lib/postgresql/dataConfig
-
-  hole:
-    image: hole:0.3.0-beta.0
-    container_name: hole
-    networks:
-      - hole-net
-    ports:
-      - "9191:9191"
-    depends_on:
-      - hole-postgres
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://hole-postgres:5432/hole_data
-    restart: on-failure
-
-networks:
-  hole-net:
-    driver: bridge

@@ -28,7 +28,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-undertow")
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-    implementation("org.mariadb.jdbc:mariadb-java-client")
+    implementation("org.postgresql:postgresql")
     implementation("org.liquibase:liquibase-core:$liquibaseVersion")
     implementation("dev.d1s:spring-boot-starter-advice:$starterAdviceVersion")
     implementation("dev.d1s:spring-boot-starter-simple-security:$starterSimpleSecurityVersion")
