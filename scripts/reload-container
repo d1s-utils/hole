@@ -1,0 +1,8 @@
+#!/bin/bash
+
+docker-compose -f docker-compose.dev.yml down
+docker volume prune -f
+rm -r ~/.hole
+mkdir ~/.hole
+./gradlew bootBuildImage
+docker-compose -f docker-compose.dev.yml up
