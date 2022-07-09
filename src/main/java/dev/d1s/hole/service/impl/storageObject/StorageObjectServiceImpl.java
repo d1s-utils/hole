@@ -146,18 +146,6 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
             throw new RuntimeException(e);
         }
 
-        response.setHeader(
-                HttpHeaders.CONTENT_DISPOSITION,
-                ContentDisposition.builder(
-                                contentDisposition != null
-                                        ? contentDisposition
-                                        : ContentDispositionConstants.DEFAULT_CONTENT_DISPOSITION_TYPE
-                        )
-                        .filename(object.getName())
-                        .build()
-                        .toString()
-        );
-
         InputStream in = null;
 
         try {
@@ -169,18 +157,33 @@ public class StorageObjectServiceImpl implements StorageObjectService, Initializ
                 in = encryptionService.createDecryptedInputStream(in, encryptionKey);
             }
 
-            var contentTypeAndLengthSet = false;
+            var headersConfigured = false;
 
             final var buffer = new byte[IOUtils.DEFAULT_BUFFER_SIZE];
 
             while (true) {
                 final var read = in.read(buffer, 0, IOUtils.DEFAULT_BUFFER_SIZE);
 
-                if (!contentTypeAndLengthSet) {
+                if (!headersConfigured) {
                     response.setContentType(object.getContentType());
+
                     response.setContentLengthLong(contentLength);
 
-                    contentTypeAndLengthSet = true;
+                    response.setHeader(
+                            HttpHeaders.CONTENT_DISPOSITION,
+                            ContentDisposition.builder(
+                                            contentDisposition != null
+                                                    ? contentDisposition
+                                                    : ContentDispositionConstants.DEFAULT_CONTENT_DISPOSITION_TYPE
+                                    )
+                                    .filename(object.getName())
+                                    .build()
+                                    .toString()
+                    );
+
+                    response.setHeader(HttpHeaders.ETAG, object.getDigest());
+
+                    headersConfigured = true;
                 }
 
                 if (read != -1) {
