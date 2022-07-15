@@ -3,7 +3,7 @@
 [![wakatime](https://wakatime.com/badge/user/e4446807-0aa6-4ba9-92ea-2a7632bc44c9/project/553f1fbf-9c98-48cb-a230-ce120e1c2192.svg)](https://wakatime.com/badge/user/e4446807-0aa6-4ba9-92ea-2a7632bc44c9/project/553f1fbf-9c98-48cb-a230-ce120e1c2192)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Java CI with Gradle](https://github.com/hole-project/hole/actions/workflows/gradle.yml/badge.svg?branch=main)](https://github.com/hole-project/hole/actions/workflows/gradle.yml)
-[![documentation status](https://img.shields.io/badge/documentation%20status-up%20to%20date-success)](https://hole.d1s.dev)
+[![documentation status](https://img.shields.io/badge/documentation%20status-outdated-red)](https://hole.d1s.dev)
 
 Simple and extensible storage service implementation with optional encryption.
 
