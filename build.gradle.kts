@@ -16,6 +16,7 @@ repositories {
 val liquibaseVersion: String by project
 val starterAdviceVersion: String by project
 val starterSimpleSecurityVersion: String by project
+val starterWelcomerVersion: String by project
 val longPollingStarterVersion: String by project
 val teabagsVersion: String by project
 val tikaVersion: String by project
@@ -32,6 +33,9 @@ dependencies {
     implementation("org.liquibase:liquibase-core:$liquibaseVersion")
     implementation("dev.d1s:spring-boot-starter-advice:$starterAdviceVersion")
     implementation("dev.d1s:spring-boot-starter-simple-security:$starterSimpleSecurityVersion")
+    implementation("dev.d1s:spring-boot-starter-welcomer:$starterWelcomerVersion") {
+        exclude("dev.d1s.teabags", "teabag-stdlib")
+    }
     implementation("dev.d1s.long-polling:spring-boot-starter-lp-server-web:$longPollingStarterVersion")
     implementation("dev.d1s.teabags:teabag-spring-web:$teabagsVersion")
     implementation("dev.d1s.teabags:teabag-dto:$teabagsVersion")
