@@ -2,6 +2,7 @@ plugins {
     java
     id("org.springframework.boot") version "2.7.0"
     id("io.spring.dependency-management") version "1.0.11.RELEASE"
+    id("com.gorylenko.gradle-git-properties") version "2.4.0"
 }
 
 group = "dev.d1s"
@@ -82,4 +83,8 @@ tasks.withType<Test> {
 
 sourceSets.getByName("test") {
     java.srcDir("./test")
+}
+
+springBoot {
+    buildInfo()
 }
